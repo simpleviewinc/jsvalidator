@@ -96,6 +96,10 @@ var validateField = function(value, def, contextArray, rootObj) {
 		if (! (value instanceof def.class)) {
 			simpleError = true;
 		}
+	} else if (def.type === "date") {
+		if (! (value instanceof Date)) {
+			simpleError = true;
+		}
 	} else if (def.type === "object" || def.type === "indexObject") {
 		if (typeof value !== "object") {
 			simpleError = true;

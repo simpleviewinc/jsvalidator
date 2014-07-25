@@ -1,4 +1,4 @@
-var validator = require("/sv/node_modules/sv/validator/1/");
+var validator = require("../index.js");
 var assert = require("assert");
 
 describe(__filename, function() {
@@ -100,6 +100,13 @@ describe(__filename, function() {
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "class", class : MyClass }] });
 		
 		assert.ok(returnData.success);
+	});
+	
+	it("should validate date", function() {
+		var returnData = validator.validate(new Date(), { type : "date" });
+		assert.equal(returnData.success, true);
+		var returnData = validator.validate(Date.now(), { type : "date" });
+		assert.equal(returnData.success, false);
 	});
 	
 	it("should validate inner objects", function() {
