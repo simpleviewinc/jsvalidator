@@ -174,11 +174,11 @@ var validateField = function(value, def, contextArray, rootObj) {
 		}
 	} else {
 		// invalid type specified throw error, this is not a validation error but a developer error, so we throw
-		throw new Error(util.format("Validate: type '%s' at context '%s' is not a valid key type", def.type, contextArray.join(".")));
+		throw new Error(util.format("Validate: type '%s' at context '%s' is not a valid key type.", def.type, contextArray.join(".")));
 	}
 	
 	if (simpleError) {
-		var err = new Error(util.format("field is not of type '%s' at context '%s'", def.type, contextArray.join(".")));
+		var err = new Error(util.format("field is not of type '%s' at context '%s'.", def.type, contextArray.join(".")));
 		myErrors.push({ err : err, contextArray : contextArray });
 	}
 	
@@ -186,19 +186,25 @@ var validateField = function(value, def, contextArray, rootObj) {
 		if (def.defaultOnInvalid) {
 			returnData.data = getDefault();
 		} else if (def.throwOnInvalid) {
-			throw myErrors[0].err;
+			throw concatErrors(myErrors);
 		} else {
 			returnData.errors = returnData.errors.concat(myErrors);
+			returnData.err = concatErrors(returnData.errors);
 		}
 	}
 	
 	return returnData;
 }
 
+var concatErrors = function(errors) {
+	return new Error(errors.map(function(val) { return val.err.message }).join("\r\n"));
+}
+
 var getDefaultReturn = function(data) {
 	return {
 		data : data,
 		errors : [],
+		err : null,
 		success : false
 	}
 }

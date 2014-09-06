@@ -252,4 +252,17 @@ describe(__filename, function() {
 		assert.ok(returnData.success);
 		assert.ok(returnData.data.length === 0);
 	});
+	
+	it("should concat to a single error", function() {
+		var data = { foo : "bar", bar : 1, baz : "moo" };
+		var temp = validator.validate(data, {
+			type : "object",
+			schema : [{ name : "foo", type : "number" }, { name : "bar", type : "string" }, { name : "baz", type : "number" }]
+		});
+		
+		assert.equal(temp.err instanceof Error, true);
+		assert.ok(temp.err.message.match(/root.foo/));
+		assert.ok(temp.err.message.match(/root.bar/));
+		assert.ok(temp.err.message.match(/root.baz/));
+	});
 });
