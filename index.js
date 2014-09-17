@@ -55,14 +55,12 @@ var validateField = function(value, def, contextArray, rootObj) {
 	}
 	
 	if (!exists && !def.required && def.default === undefined) {
-		// console.log("not exists and not required and no default", value, def);
 		// doesn't exist, not required, does not have default then do nothing
 		return returnData;
 	}
 	
 	if (!exists && !def.required && def.default !== undefined) {
 		// doesn't exist, not required, has default then use default
-		//console.log("not exists and not required and default");
 		returnData.data = getDefault();
 		
 		return returnData;
@@ -79,6 +77,16 @@ var validateField = function(value, def, contextArray, rootObj) {
 	if (def.type === "string") {
 		if (typeof value !== "string") {
 			simpleError = true;
+		} else {
+			if (def.min !== undefined && value.length < def.min) {
+				var err = new Error(util.format("field has a minimum length of '%s' at context '%s'.", def.min, contextArray.join(".")));
+				myErrors.push({ err : err, contextArray : contextArray });
+			}
+			
+			if (def.max !== undefined && value.length > def.max) {
+				var err = new Error(util.format("field has a maximum length of '%s' at context '%s'.", def.max, contextArray.join(".")));
+				myErrors.push({ err : err, contextArray : contextArray });
+			}
 		}
 	} else if (def.type === "boolean") {
 		if (typeof value !== "boolean") {

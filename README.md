@@ -157,6 +157,8 @@ var temp = jsvalidator.validate(bar, { type : "class", class : Foo });
     * `allowExtraKeys` - `boolean` - default `true` - When validating object, this will allow extra keys not declared in the schema to remain in the object. If `false` then it will be considered invalid if a non-declared key is in the object being validated.
     * `deleteExtraKeys` - `boolean` - default `false` - When validating objects, if extra keys are passed which aren't declared in the schema, they will be removed, but the object will be considered valid.
     * `throwOnInvalid` - `boolean` - default `false` - When true, it will throw an error if the data did not pass validation.
+    * `min` - `number` - When validating strings ensures that the string is longer than the `min`.
+    * `max` - `number` - When validating strings ensures that the string is longer than the `max`.
 
 ## valid types
 

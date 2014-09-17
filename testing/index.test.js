@@ -64,6 +64,28 @@ describe(__filename, function() {
 		assert.ok(returnData.success);
 	});
 	
+	it("should validate string with min and/or max", function() {
+		var data = {
+			foo : "data"
+		}
+		assert.equal(validator.validate("short", { type : "string", min : 10 }).success, false);
+		assert.equal(validator.validate("short", { type : "string", min : 5 }).success, true);
+		assert.equal(validator.validate("short", { type : "string", min : 3 }).success, true);
+		assert.equal(validator.validate("short", { type : "string", max : 10 }).success, true);
+		assert.equal(validator.validate("short", { type : "string", max : 5 }).success, true);
+		assert.equal(validator.validate("short", { type : "string", max : 3 }).success, false);
+		assert.equal(validator.validate("short", { type : "string", max : 10, min : 3 }).success, true);
+		assert.equal(validator.validate("short", { type : "string", max : 5, min : 5 }).success, true);
+		assert.equal(validator.validate("short", { type : "string", max : 3, min : 1 }).success, false);
+		assert.equal(validator.validate("short", { type : "string", max : 10, min : 6 }).success, false);
+		
+		var temp = validator.validate("short", { type : "string", min : 10 });
+		assert.ok(temp.err.message.match(/minimum length of '10' at context 'root'/));
+		
+		var temp = validator.validate("short", { type : "string", max : 3 });
+		assert.ok(temp.err.message.match(/maximum length of '3' at context 'root'/));
+	});
+	
 	it("should validate number", function() {
 		var data = {
 			foo : 1
