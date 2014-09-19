@@ -2,6 +2,8 @@
 
 # jsvalidator
 
+`npm install jsvalidator`
+
 Comprehensive recursive Javscript validator for objects, arrays, strings and more.
 
 # Features
@@ -14,6 +16,8 @@ Comprehensive recursive Javscript validator for objects, arrays, strings and mor
 0. Can return a single error which states all of the validation problems in the object. Helps to provide developers with exactly what is wrong with their arguments.
 
 # Getting Started
+
+`npm install jsvalidator`
 
 jsvalidator has a very simple syntax.
 
