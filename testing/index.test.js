@@ -7,7 +7,7 @@ describe(__filename, function() {
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "string", required : true }] });
 		
 		assert.ok(!returnData.success);
-		assert.ok(returnData.errors[0].err instanceof Error);
+		assert.ok(returnData.err.message.match(/Required field 'foo' does not exist\./));
 	});
 	
 	it("should replace undefined value with default", function() {
@@ -80,10 +80,13 @@ describe(__filename, function() {
 		assert.equal(validator.validate("short", { type : "string", max : 10, min : 6 }).success, false);
 		
 		var temp = validator.validate("short", { type : "string", min : 10 });
-		assert.ok(temp.err.message.match(/minimum length of '10' at context 'root'/));
+		assert.ok(temp.err.message.match(/Field has a minimum length of '10'\./));
 		
 		var temp = validator.validate("short", { type : "string", max : 3 });
-		assert.ok(temp.err.message.match(/maximum length of '3' at context 'root'/));
+		assert.ok(temp.err.message.match(/Field has a maximum length of '3'\./));
+		
+		var temp = validator.validate({ foo : { bar : "string" } }, { type : "object", schema : [{ name : "foo", type : "object", schema : [{ name : "bar", type : "string", max : 3 }] }] });
+		assert.ok(temp.err.message.match(/Field 'foo.bar' has a maximum length of '3'\./));
 	});
 	
 	it("should validate number", function() {
@@ -188,7 +191,7 @@ describe(__filename, function() {
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "string" }], allowExtraKeys : false });
 		
 		assert.equal(returnData.success, false);
-		assert.notEqual(returnData.errors[0].err.message.match(/not declared in schema/), null);
+		assert.ok(returnData.err.message.match(/Object contains extra key 'bar' not declared in schema\./));
 	});
 	
 	it("should delete extra keys", function() {
@@ -236,7 +239,7 @@ describe(__filename, function() {
 		var returnData = validator.validate(data, { type : "array", schema : { type : "number" } });
 		
 		assert.ok(!returnData.success);
-		assert.ok(returnData.errors[0].contextArray[1] === 3);
+		assert.ok(returnData.err.message.match(/Field '3' is not of type 'number'\./));
 	});
 	
 	it("should validate array of objects", function() {
@@ -245,8 +248,7 @@ describe(__filename, function() {
 		var returnData = validator.validate(data, { type : "array", schema : { type : "object", schema : [{ name : "foo", type : "string" }] } });
 		
 		assert.ok(!returnData.success);
-		assert.ok(returnData.errors[0].contextArray[1] === 2);
-		assert.ok(returnData.errors[0].contextArray[2] === "foo");
+		assert.ok(returnData.err.message.match(/Field '2.foo' is not of type 'string'\./));
 	});
 	
 	it("should delete invalid array entries", function() {
@@ -283,8 +285,18 @@ describe(__filename, function() {
 		});
 		
 		assert.equal(temp.err instanceof Error, true);
-		assert.ok(temp.err.message.match(/root.foo/));
-		assert.ok(temp.err.message.match(/root.bar/));
-		assert.ok(temp.err.message.match(/root.baz/));
+		assert.ok(temp.err.message.match(/Field 'foo' is not of type 'number'\./));
+		assert.ok(temp.err.message.match(/Field 'bar' is not of type 'string'\./));
+		assert.ok(temp.err.message.match(/Field 'baz' is not of type 'number'\./));
+	});
+	
+	it("should throw on invalid type", function() {
+		assert.throws(
+			function() {
+				var data = { foo : "string" };
+				var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "fakeType" }] });
+			},
+			/Field 'foo' should be of type 'fakeType' but that type isn't supported by jsvalidator\./
+		);
 	});
 });

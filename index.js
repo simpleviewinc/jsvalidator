@@ -1,7 +1,5 @@
-var util = require("util");
-
 var validate = function(obj, schema) {
-	var contextArray = ["root"];
+	var contextArray = [];
 	var returnData = validateField(obj, schema, contextArray, obj);
 	
 	returnData.success = returnData.errors.length === 0;
@@ -31,7 +29,7 @@ var validateField = function(value, def, contextArray, rootObj) {
 			};
 			
 			
-			for(var i = 1; i < contextArray.length - 1; i++) {
+			for(var i = 0; i < contextArray.length - 1; i++) {
 				args.current = args.current[contextArray[i]];
 			}
 			
@@ -44,7 +42,7 @@ var validateField = function(value, def, contextArray, rootObj) {
 	var exists = value !== undefined;
 	
 	if (!exists && def.required) {
-		var err = new Error(util.format("Required field '%s' at context '%s' does not exist", def.name, contextArray.join(".")));
+		var err = new Error("Required field" + contextToString(contextArray) + "does not exist.");
 		
 		if (def.throwOnInvalid) {
 			throw err;
@@ -79,12 +77,12 @@ var validateField = function(value, def, contextArray, rootObj) {
 			simpleError = true;
 		} else {
 			if (def.min !== undefined && value.length < def.min) {
-				var err = new Error(util.format("field has a minimum length of '%s' at context '%s'.", def.min, contextArray.join(".")));
+				var err = new Error("Field" + contextToString(contextArray) + "has a minimum length of '" + def.min + "'.");
 				myErrors.push({ err : err, contextArray : contextArray });
 			}
 			
 			if (def.max !== undefined && value.length > def.max) {
-				var err = new Error(util.format("field has a maximum length of '%s' at context '%s'.", def.max, contextArray.join(".")));
+				var err = new Error("Field" + contextToString(contextArray) + "has a maximum length of '" + def.max + "'.");
 				myErrors.push({ err : err, contextArray : contextArray });
 			}
 		}
@@ -153,7 +151,7 @@ var validateField = function(value, def, contextArray, rootObj) {
 							if (def.deleteExtraKeys === true) {
 								delete val[i2];
 							} else {
-								myErrors.push({ err : new Error(util.format("field contains extra key '%s' not declared in schema", i2)), contextArray : contextArray });
+								myErrors.push({ err : new Error("Object" + contextToString(contextArray) + "contains extra key '" + i2 + "' not declared in schema."), contextArray : contextArray });
 							}
 						}
 					});
@@ -182,11 +180,11 @@ var validateField = function(value, def, contextArray, rootObj) {
 		}
 	} else {
 		// invalid type specified throw error, this is not a validation error but a developer error, so we throw
-		throw new Error(util.format("Validate: type '%s' at context '%s' is not a valid key type.", def.type, contextArray.join(".")));
+		throw new Error("Field" + contextToString(contextArray) + "should be of type '" + def.type + "' but that type isn't supported by jsvalidator.");
 	}
 	
 	if (simpleError) {
-		var err = new Error(util.format("field is not of type '%s' at context '%s'.", def.type, contextArray.join(".")));
+		var err = new Error("Field" + contextToString(contextArray) + "is not of type '" + def.type + "'.");
 		myErrors.push({ err : err, contextArray : contextArray });
 	}
 	
@@ -194,18 +192,23 @@ var validateField = function(value, def, contextArray, rootObj) {
 		if (def.defaultOnInvalid) {
 			returnData.data = getDefault();
 		} else if (def.throwOnInvalid) {
-			throw concatErrors(myErrors);
+			throw concatErrors(rootObj, myErrors);
 		} else {
 			returnData.errors = returnData.errors.concat(myErrors);
-			returnData.err = concatErrors(returnData.errors);
+			returnData.err = concatErrors(rootObj, returnData.errors);
 		}
 	}
 	
 	return returnData;
 }
 
-var concatErrors = function(errors) {
-	return new Error(errors.map(function(val) { return val.err.message }).join("\r\n"));
+var contextToString = function(contextArray) {
+	return contextArray.length === 0 ? " " : " '" + contextArray.join(".") + "' ";
+}
+
+var concatErrors = function(rootObj, errors) {
+	var msg = errors.map(function(val) { return val.err.message }).join("\r\n\t") + "\r\n\tin " + JSON.stringify(rootObj);
+	return new Error("Validation Error\r\n\t" + msg);
 }
 
 var getDefaultReturn = function(data) {
