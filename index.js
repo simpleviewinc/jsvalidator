@@ -6,6 +6,8 @@ if (typeof exports === 'object' && typeof define !== 'function') {
 }
 
 define(function(require, exports, module) {
+	var util = require("util-browser");
+	
 	var validate = function(obj, schema) {
 		var contextArray = [];
 		var returnData = validateField(obj, schema, contextArray, obj);
@@ -215,7 +217,7 @@ define(function(require, exports, module) {
 	}
 
 	var concatErrors = function(rootObj, errors) {
-		var msg = errors.map(function(val) { return val.err.message }).join("\r\n\t") + "\r\n\tin " + JSON.stringify(rootObj);
+		var msg = errors.map(function(val) { return val.err.message }).join("\r\n\t") + "\r\n\tin " + util.inspect(rootObj);
 		return new Error("Validation Error\r\n\t" + msg);
 	}
 

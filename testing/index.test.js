@@ -290,6 +290,19 @@ describe(__filename, function() {
 		assert.ok(temp.err.message.match(/Field 'baz' is not of type 'number'\./));
 	});
 	
+	it("should handler circular references in errors", function() {
+		var data = { foo : "bar" };
+		data.circle = data;
+		
+		var temp = validator.validate(data, {
+			type : "object",
+			schema : [{ name : "foo", type : "number" }]
+		});
+		
+		assert.equal(temp.err instanceof Error, true);
+		assert.ok(temp.err.message.match(/in \{ foo: 'bar', circle: \[Circular\] \}/));
+	});
+	
 	it("should throw on invalid type", function() {
 		assert.throws(
 			function() {
