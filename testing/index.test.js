@@ -10,6 +10,14 @@ describe(__filename, function() {
 		assert.ok(returnData.err.message.match(/Required field 'foo' does not exist\./));
 	});
 	
+	it("should do nothing on values that don't exist and aren't required", function() {
+		var data = { foo : "fooValue" }
+		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "string" }, { name : "bar", type : "string" }] });
+		
+		assert.equal(Object.keys(data).length, 1);
+		assert.equal(data.bar, undefined);
+	});
+	
 	it("should replace undefined value with default", function() {
 		var data = {};
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "string", default : "foo" }] });

@@ -144,7 +144,9 @@ define(function(require, exports, module) {
 						tempContext.push(val2.name);
 						var tempReturn = validateField(val[val2.name], val2, tempContext, rootObj);
 						
-						val[val2.name] = tempReturn.data;
+						if (tempReturn.data !== undefined) {
+							val[val2.name] = tempReturn.data;
+						}
 						
 						if (tempReturn.errors.length > 0) {
 							if (val2.deleteOnInvalid) {
