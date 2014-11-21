@@ -171,6 +171,18 @@ describe(__filename, function() {
 		assert.ok(data.foo.baz === 1);
 	});
 	
+	it("should validate indexObject", function() {
+		// should succeed
+		var data = { foo : { inner : 1 }, bar : { inner : 2 }, baz : { inner : 3 } };
+		var returnData = validator.validate(data, { type : "indexObject", schema : [{ name : "inner", type : "number", required : true }] });
+		assert.ok(returnData.success);
+		
+		// should fail validation due to inner object
+		var data = { foo : { inner : 1 }, bar : { inner : "fail" } };
+		var returnData = validator.validate(data, { type : "indexObject", schema : [{ name : "inner", type : "number", required : true }] });
+		assert.ok(!returnData.success);
+	});
+	
 	it("should validate simple field", function() {
 		var data = "stuff";
 		
