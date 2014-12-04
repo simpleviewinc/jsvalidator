@@ -86,6 +86,11 @@ define(function(require, exports, module) {
 			if (typeof value !== "string") {
 				simpleError = true;
 			} else {
+				if (def.enum !== undefined && def.enum.indexOf(value) === -1) {
+					var err = new Error("Field" + contextToString(contextArray) + "must be a value in '" + def.enum + "'.");
+					myErrors.push({ err : err, contextArray : contextArray });
+				}
+				
 				if (def.min !== undefined && value.length < def.min) {
 					var err = new Error("Field" + contextToString(contextArray) + "has a minimum length of '" + def.min + "'.");
 					myErrors.push({ err : err, contextArray : contextArray });

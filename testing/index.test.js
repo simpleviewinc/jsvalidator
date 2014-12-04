@@ -97,6 +97,12 @@ describe(__filename, function() {
 		assert.ok(temp.err.message.match(/Field 'foo.bar' has a maximum length of '3'\./));
 	});
 	
+	it("should validate string with enum", function() {
+		assert.equal(validator.validate("test", { type : "string", enum : ["test", "test2"] }).success, true);
+		assert.equal(validator.validate("test", { type : "string", enum : ["test3", "test2"] }).success, false);
+		assert.equal(validator.validate("test", { type : "string", enum : ["test"] }).success, true);
+	});
+	
 	it("should validate number", function() {
 		var data = {
 			foo : 1
