@@ -13,7 +13,10 @@ define(function(require, exports, module) {
 		var returnData = validateField(obj, schema, contextArray, obj);
 		
 		returnData.success = returnData.errors.length === 0;
-		returnData.err = concatErrors(obj, returnData.errors);
+		
+		if (returnData.errors.length > 0) {
+			returnData.err = concatErrors(obj, returnData.errors);
+		}
 		
 		return returnData;
 	}

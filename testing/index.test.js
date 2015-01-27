@@ -375,4 +375,16 @@ describe(__filename, function() {
 			/Field 'foo' should be of type 'fakeType' but that type isn't supported by jsvalidator\./
 		);
 	});
+	
+	it("should return proper returnData", function() {
+		var result1 = validator.validate(undefined, { type : "string", required : true });
+		assert.equal(result1.success, false);
+		assert.equal(result1.err instanceof Error, true);
+		assert.equal(result1.errors.length, 1);
+		
+		var result2 = validator.validate("foo", { type : "string", required : true });
+		assert.equal(result2.success, true);
+		assert.equal(result2.err, undefined);
+		assert.equal(result2.errors.length, 0);
+	});
 });
