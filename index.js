@@ -13,6 +13,7 @@ define(function(require, exports, module) {
 		var returnData = validateField(obj, schema, contextArray, obj);
 		
 		returnData.success = returnData.errors.length === 0;
+		returnData.err = concatErrors(obj, returnData.errors);
 		
 		return returnData;
 	}
@@ -231,7 +232,6 @@ define(function(require, exports, module) {
 				throw concatErrors(rootObj, myErrors);
 			} else {
 				returnData.errors = returnData.errors.concat(myErrors);
-				returnData.err = concatErrors(rootObj, returnData.errors);
 			}
 		}
 		
