@@ -38,9 +38,16 @@ define(function(require, exports, module) {
 					current : rootObj
 				};
 				
+				var levels = [args.current];
 				
 				for(var i = 0; i < contextArray.length - 1; i++) {
 					args.current = args.current[contextArray[i]];
+					levels.push(args.current);
+				}
+				
+				if (levels[levels.length - 2] instanceof Array) {
+					// if we are currently within an object, within an array, we can get the index of the current loop
+					args.i = contextArray[contextArray.length - 2];
 				}
 				
 				return def.default(args);
@@ -69,9 +76,16 @@ define(function(require, exports, module) {
 		
 		if (!exists && !def.required && def.default !== undefined) {
 			// doesn't exist, not required, has default then use default
-			returnData.data = getDefault();
+			value = getDefault();
+			returnData.data = value;
 			
-			return returnData;
+			if (def.type === "object") {
+				// if it is an object and we're using the default, we still want it to run through the validations of it's inner keys
+				// this allows defaults and requires to still be processed on "default" values
+				exists = true;
+			} else {
+				return returnData;
+			}
 		}
 		
 		// field exists
@@ -98,6 +112,11 @@ define(function(require, exports, module) {
 				
 				if (def.max !== undefined && value.length > def.max) {
 					var err = new Error("Field" + contextToString(contextArray) + "has a maximum length of '" + def.max + "'.");
+					myErrors.push({ err : err, contextArray : contextArray });
+				}
+				
+				if (def.regex !== undefined && !value.match(def.regex)) {
+					var err = new Error("Field" + contextToString(contextArray) + "does not match a regex of '" + def.regex + "'.");
 					myErrors.push({ err : err, contextArray : contextArray });
 				}
 			}

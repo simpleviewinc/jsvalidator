@@ -37,6 +37,11 @@ describe(__filename, function() {
 		assert.ok(data.foo === 1);
 	});
 	
+	it("should run default object back through validator", function() {
+		assert.deepEqual(validator.validate(undefined, { type : "object", schema : [{ name : "foo", type : "string", default : "foo" }], default : {} }).data, { foo : "foo" });
+		assert.equal(validator.validate(undefined, { type : "object", schema : [{ name : "foo", type : "string" }], default : { foo : 5 } }).success, false);
+	});
+	
 	it("should replace undefined value with default from function", function() {
 		var data = { foo : "fooValue" };
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "bar", type : "number", default : function(args) { return args.current.foo + "_barValue" } }] });
@@ -52,6 +57,33 @@ describe(__filename, function() {
 		assert.ok(returnData.success);
 		assert.ok(data[0].bar === "fooValue_barValue");
 		assert.ok(data[1].bar === "fooValue2_barValue");
+	});
+	
+	it("should have iterator on default function in array of objects", function() {
+		var data = [{ foo : "fooValue" }, { foo : "fooValue2" }];
+		var returnData = validator.validate(data, { type : "array", schema : { type : "object", schema : [{ name : "bar", type : "number", default : function(args) { return args.i } }] } });
+		
+		assert.equal(data[0].bar, 0);
+		assert.equal(data[1].bar, 1);
+		
+		var data = {
+			inner : {
+				array : [
+					{},
+					{}
+				]
+			}
+		}
+		
+		var returnData = validator.validate(data, { type : "object", schema : [{ name : "inner", type : "object", schema : [{ name : "array", type : "array", schema : { type : "object", schema : [{ name : "i", type : "integer", default : function(args) { return args.i } }] } }] }] });
+		assert.deepEqual(returnData.data, {
+			inner : {
+				array : [
+					{ i : 0 },
+					{ i : 1 }
+				]
+			}
+		});
 	});
 	
 	it("should return no errors when everything is valid", function() {
@@ -101,6 +133,11 @@ describe(__filename, function() {
 		assert.equal(validator.validate("test", { type : "string", enum : ["test", "test2"] }).success, true);
 		assert.equal(validator.validate("test", { type : "string", enum : ["test3", "test2"] }).success, false);
 		assert.equal(validator.validate("test", { type : "string", enum : ["test"] }).success, true);
+	});
+	
+	it("should validate string with regex", function() {
+		assert.equal(validator.validate("test_123_foo", { type : "string", regex : /^[a-z0-9_]*$/ }).success, true);
+		assert.equal(validator.validate("teSt_123_foo", { type : "string", regex : /^[a-z0-9_]*$/ }).success, false);
 	});
 	
 	it("should validate number", function() {

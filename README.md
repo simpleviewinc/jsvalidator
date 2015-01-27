@@ -146,6 +146,55 @@ var temp = jsvalidator.validate(bar, { type : "class", class : Foo });
 // temp.success === false
 ```
 
+### Defaulting values
+
+You can specify a default value with a simple value or with a function.
+
+```js
+// sets a value from a simple value
+var data = {};
+var temp = jsvalidator.validate(data, { type : "object", schema : [{ name : "foo", type : "string", default : "fooValue" }] });
+// data.foo === "fooValue"
+
+// sets a value from a function
+var data = {};
+var temp = jsvalidator.validate(data, { type : "object", schema : [{ name : "foo", type : "string", default : function(args) { return "fooValue" } }] });
+// data.foo === "fooValue"
+
+// sets a value from a function based on another key within the object
+var data = [
+    {
+        i : 0,
+        foo : "fooValue1"
+    },
+    {
+        i : 1,
+        foo : "FoOVaLue2"
+    }
+];
+
+var temp = jsvalidator.validate(data, {
+    type : "array",
+    schema : {
+        type : "object",
+        schema : [
+            { name : "foo", type : "string", required : true },
+            { name : "fooLower", type : "string", default : function(args) { return args.current.foo.toLowerCase() } }
+        ]
+    }
+});
+
+// data[0].fooLower === "foovalue1"
+// data[1].foolower === "foovalue2"
+```
+
+* `default` function args
+    * `rootObj` - `any` - The root entity that is being validated.
+    * `current` - `any` - If inside an object, it is a reference to that object, this is useful if a key depends on another key.
+    * `i` - `interger` - If inside an object which is inside an array, it is the array index of this object. This is useful for defaulting an ascending integer to each element in an array.
+
+*NOTE:* If you are iterating through an array an default a value to a implicit array or object `{}` or `[]` it is doing it by reference. This means all iterations will get the same array or object. You should use a function in that situation.
+
 # API Documentation
 
 ## validator.validate(data, schema)
@@ -155,7 +204,7 @@ var temp = jsvalidator.validate(bar, { type : "class", class : Foo });
     * `name` - `string` - The name of the key. Not required for the root level schema.
     * `type` - `string` - The type of the key. If the data in that key is not the valid type, it will return invalid.
     * `required` - `boolean` - Whether the key is required. If key is undefined, it will return invalid.
-    * `default` - `any` or `function` - The default value to use when the key is undefined, or will execute a function to fill it in. When using a function, it wil have access to the keys in the passed in data as well.
+    * `default` - `any` or `function` - The default value to use when the key is undefined, or will execute a function to fill it in. See the section on defaulting values for more information.
     * `class` - `class` - Any un-initialized `function` to be used when doing `type : "class"`. Equivalent to `foo instanceof class`.
     * `schema` - `object` or `array` - For objects, use an array to define the schema (because it is the keys of the object). For arrays, use an object to define the schema (because it is the schema checked against each item in the array).
     * `allowExtraKeys` - `boolean` - default `true` - When validating object, this will allow extra keys not declared in the schema to remain in the object. If `false` then it will be considered invalid if a non-declared key is in the object being validated.
@@ -163,6 +212,7 @@ var temp = jsvalidator.validate(bar, { type : "class", class : Foo });
     * `throwOnInvalid` - `boolean` - default `false` - When true, it will throw an error if the data did not pass validation.
     * `min` - `number` - When validating strings ensures that the string is longer than the `min`.
     * `max` - `number` - When validating strings ensures that the string is longer than the `max`.
+    * `regex` - `regex` - When validating strings ensures that the string matches the regex. If no match, it will be invalid.
 
 ## valid types
 
