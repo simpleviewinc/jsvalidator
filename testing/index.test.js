@@ -234,6 +234,25 @@ describe(__filename, function() {
 		assert.ok(!returnData.success);
 	});
 	
+	it("should validate with undefined type", function() {
+		var tests = [
+			["something", true],
+			[5, true],
+			[undefined, false]
+		];
+		
+		tests.forEach(function(val, i) {
+			var result = validator.validate({ foo : val[0] }, {
+				type : "object",
+				schema : [
+					{ name : "foo", type : "any", required : true }
+				]
+			});
+			
+			assert.equal(result.success, val[1]);
+		});
+	});
+	
 	it("should delete object key on invalid in object", function() {
 		var data = {
 			foo : "bar",

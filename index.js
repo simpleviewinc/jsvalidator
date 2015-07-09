@@ -100,7 +100,9 @@ define(function(require, exports, module) {
 		var myErrors = [];
 		var simpleError = false;
 		
-		if (def.type === "string") {
+		if (def.type === "any") {
+			// no type declared perform no type validation
+		} else if (def.type === "string") {
 			if (typeof value !== "string") {
 				simpleError = true;
 			} else {
