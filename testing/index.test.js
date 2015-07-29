@@ -276,7 +276,7 @@ describe(__filename, function() {
 		assert.ok(returnData.err.message.match(/Object contains extra key 'bar' not declared in schema\./));
 	});
 	
-	it("should delete extra keys", function() {
+	it("should delete extra keys on object", function() {
 		var data = {
 			foo : "fooValue",
 			bar : "barValue"
@@ -284,8 +284,23 @@ describe(__filename, function() {
 		
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "string" }], deleteExtraKeys : true });
 		
-		assert.equal(returnData.success, true);
-		assert.equal(data.bar, undefined);
+		assert.strictEqual(returnData.success, true);
+		assert.strictEqual(data.bar, undefined);
+	});
+	
+	it("should delete extra keys on indexObject", function() {
+		var data = {
+			foo : {
+				foo : "fooValue",
+				bar : "barValue"
+			}
+		}
+		
+		var returnData = validator.validate(data, { type : "indexObject", schema : [{ name : "foo", type : "string" }], deleteExtraKeys : true });
+		
+		assert.strictEqual(returnData.success, true);
+		assert.strictEqual(data.foo.foo, "fooValue");
+		assert.strictEqual(data.foo.bar, undefined);
 	});
 	
 	it("should throw on invalid", function() {
