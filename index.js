@@ -220,6 +220,25 @@ define(function(require, exports, module) {
 					}
 				});
 			}
+		} else if (def.type === "simpleObject") {
+			if (typeof value !== "object") {
+				simpleError = true;
+			} else {
+				forEach(value, function(val, i) {
+					var tempContext = [].slice.call(contextArray);
+					tempContext.push(i);
+					
+					var tempReturn = validateField(val, def.schema, tempContext, rootObj);
+					
+					if (tempReturn.errors.length > 0) {
+						if (def.schema.deleteOnInvalid) {
+							delete value[i];
+						} else {
+							myErrors = myErrors.concat(tempReturn.errors);
+						}
+					}
+				});
+			}
 		} else {
 			// invalid type specified throw error, this is not a validation error but a developer error, so we throw
 			throw new Error("Field" + contextToString(contextArray) + "should be of type '" + def.type + "' but that type isn't supported by jsvalidator.");

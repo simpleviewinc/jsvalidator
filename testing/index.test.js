@@ -226,6 +226,27 @@ describe(__filename, function() {
 		assert.ok(!returnData.success);
 	});
 	
+	it("should do simpleObject", function() {
+		var data = { foo : "string", bar : "test", baz : "another" }
+		var returnData = validator.validate(data, { type : "simpleObject", schema : { type : "string" } });
+		assert.ok(returnData.success);
+		
+		var data = { foo : "string", bar : 123, baz : "another" }
+		var returnData = validator.validate(data, { type : "simpleObject", schema : { type : "string" } });
+		assert.ok(!returnData.success);
+		assert.ok(returnData.err.message.match(/Field 'bar' is not of type 'string'/));
+		
+		var data = { foo : "string", bar : 123, baz : "another" }
+		var returnData = validator.validate(data, { type : "simpleObject", schema : { type : "string", deleteOnInvalid : true } });
+		assert.ok(returnData.success);
+		assert.deepEqual(returnData.data, { foo : "string", baz : "another" });
+		
+		var data = { inner : { foo : "string", bar : 123 } }
+		var returnData = validator.validate(data, { type : "object", schema : [{ name : "inner", type : "simpleObject", schema : { type : "string" } }] });
+		assert.ok(!returnData.success);
+		assert.ok(returnData.err.message.match(/Field 'inner.bar' is not of type 'string'/));
+	});
+	
 	it("should validate simple field", function() {
 		var data = "stuff";
 		
