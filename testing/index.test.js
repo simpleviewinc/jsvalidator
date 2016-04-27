@@ -40,6 +40,53 @@ describe(__filename, function() {
 	it("should run default object back through validator", function() {
 		assert.deepEqual(validator.validate(undefined, { type : "object", schema : [{ name : "foo", type : "string", default : "foo" }], default : {} }).data, { foo : "foo" });
 		assert.equal(validator.validate(undefined, { type : "object", schema : [{ name : "foo", type : "string" }], default : { foo : 5 } }).success, false);
+		
+		// ensure nested objects with functions on functions works
+		var returnData = validator.validate({}, {
+			type : "object",
+			schema : [
+				{
+					name : "foo",
+					type : "object",
+					schema : [
+						{
+							name : "foo",
+							type : "object",
+							schema : [{ name : "foo", type : "string", default : function() { return "foo" } }],
+							default : function() { return {} }
+						}
+					],
+					default : function() { return {} }
+				}
+			]
+		});
+		
+		assert.strictEqual(returnData.success, true);
+		assert.strictEqual(returnData.data.foo.foo.foo, "foo");
+	});
+	
+	it("should run default array back through validator", function() {
+		// ensure root level with functions on functions works
+		assert.deepEqual(validator.validate(undefined, { type : "array", schema : { type : "object", schema : [{ name : "foo", type : "string", default : function() { return "foo" } }] }, default : function() { return [{}]; } }).data, [{ foo : "foo" }]);
+		
+		// ensure nested objects with functions on functions works
+		var returnData = validator.validate({}, {
+			type : "object",
+			schema : [
+				{
+					name : "foo",
+					type : "array",
+					schema : {
+						type : "object",
+						schema : [{ name : "foo", type : "string", default : function() { return "foo" } }]
+					},
+					default : function() { return [{}] }
+				}
+			]
+		});
+		
+		assert.strictEqual(returnData.success, true);
+		assert.strictEqual(returnData.data.foo[0].foo, "foo");
 	});
 	
 	it("should replace undefined value with default from function", function() {

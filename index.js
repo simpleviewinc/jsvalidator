@@ -10,7 +10,8 @@ define(function(require, exports, module) {
 	
 	var validate = function(obj, schema) {
 		var contextArray = [];
-		var returnData = validateField(obj, schema, contextArray, obj);
+		var contextArrayObj = [];
+		var returnData = validateField(obj, schema, contextArray, contextArrayObj, obj, obj);
 		
 		returnData.success = returnData.errors.length === 0;
 		
@@ -21,7 +22,7 @@ define(function(require, exports, module) {
 		return returnData;
 	}
 
-	var validateField = function(value, def, contextArray, rootObj) {
+	var validateField = function(value, def, contextArray, contextArrayObj, rootObj, currentObj) {
 		var returnData = getDefaultReturn(value);
 		
 		def.required = def.required !== undefined ? def.required : false;
@@ -39,18 +40,11 @@ define(function(require, exports, module) {
 					value : value,
 					def : def,
 					contextArray : contextArray,
-					current : rootObj
+					contextArrayObj : contextArrayObj,
+					current : currentObj
 				};
 				
-				var levels = [args.current];
-				
-				for(var i = 0; i < contextArray.length - 1; i++) {
-					args.current = args.current[contextArray[i]];
-					levels.push(args.current);
-				}
-				
-				if (levels[levels.length - 2] instanceof Array) {
-					// if we are currently within an object, within an array, we can get the index of the current loop
+				if (contextArrayObj[contextArrayObj.length - 2] instanceof Array) {
 					args.i = contextArray[contextArray.length - 2];
 				}
 				
@@ -83,9 +77,10 @@ define(function(require, exports, module) {
 			value = getDefault();
 			returnData.data = value;
 			
-			if (def.type === "object") {
+			if (def.type === "object" || def.type === "array") {
 				// if it is an object and we're using the default, we still want it to run through the validations of it's inner keys
 				// this allows defaults and requires to still be processed on "default" values
+				
 				exists = true;
 			} else {
 				return returnData;
@@ -172,7 +167,11 @@ define(function(require, exports, module) {
 							tempContext.push(i);
 						}
 						tempContext.push(val2.name);
-						var tempReturn = validateField(val[val2.name], val2, tempContext, rootObj);
+						
+						var tempContextObj = [].slice.call(contextArrayObj);
+						tempContextObj.push(value);
+						
+						var tempReturn = validateField(val[val2.name], val2, tempContext, tempContextObj, rootObj, value);
 						
 						if (tempReturn.data !== undefined) {
 							val[val2.name] = tempReturn.data;
@@ -207,7 +206,11 @@ define(function(require, exports, module) {
 				value.forEach(function(val, i) {
 					var tempContext = [].slice.call(contextArray);
 					tempContext.push(i);
-					var tempReturn = validateField(val, def.schema, tempContext, rootObj);
+					
+					var tempContextObj = [].slice.call(contextArrayObj);
+					tempContextObj.push(value);
+					
+					var tempReturn = validateField(val, def.schema, tempContext, tempContextObj, rootObj, value);
 					
 					value[i] = tempReturn.data;
 					
@@ -228,7 +231,10 @@ define(function(require, exports, module) {
 					var tempContext = [].slice.call(contextArray);
 					tempContext.push(i);
 					
-					var tempReturn = validateField(val, def.schema, tempContext, rootObj);
+					var tempContextObj = [].slice.call(contextArrayObj);
+					tempContextObj.push(value);
+					
+					var tempReturn = validateField(val, def.schema, tempContext, tempContextObj, rootObj, value);
 					
 					if (tempReturn.errors.length > 0) {
 						if (def.schema.deleteOnInvalid) {
