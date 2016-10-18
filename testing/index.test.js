@@ -261,18 +261,6 @@ describe(__filename, function() {
 		assert.ok(data.foo.baz === 1);
 	});
 	
-	it("should validate indexObject", function() {
-		// should succeed
-		var data = { foo : { inner : 1 }, bar : { inner : 2 }, baz : { inner : 3 } };
-		var returnData = validator.validate(data, { type : "indexObject", schema : [{ name : "inner", type : "number", required : true }] });
-		assert.ok(returnData.success);
-		
-		// should fail validation due to inner object
-		var data = { foo : { inner : 1 }, bar : { inner : "fail" } };
-		var returnData = validator.validate(data, { type : "indexObject", schema : [{ name : "inner", type : "number", required : true }] });
-		assert.ok(!returnData.success);
-	});
-	
 	it("should do simpleObject", function() {
 		var data = { foo : "string", bar : "test", baz : "another" }
 		var returnData = validator.validate(data, { type : "simpleObject", schema : { type : "string" } });
@@ -488,5 +476,215 @@ describe(__filename, function() {
 		assert.equal(result2.success, true);
 		assert.equal(result2.err, undefined);
 		assert.equal(result2.errors.length, 0);
+	});
+	
+	describe("tests array", function() {
+		var tests = [
+			{
+				it : "indexObject - nested",
+				data : {
+					foo : { nested : "a" },
+					bar : { nested : "b" },
+					baz : { nested : "c" }
+				},
+				schema : {
+					type : "indexObject",
+					schema : [
+						{ name : "nested", type : "string", required : true }
+					]
+				},
+				success : true
+			},
+			{
+				it : "indexObject - nested failure",
+				data : {
+					foo : { nested : "a" },
+					bar : { nested : 10 },
+					baz : { nested : "c" }
+				},
+				schema : {
+					type : "indexObject",
+					schema : [
+						{ name : "nested", type : "string", required : true }
+					]
+				},
+				success : false,
+				err : /Field 'bar.nested' is not of type 'string'/
+			},
+			{
+				it : "indexObject - delete failure simple",
+				data : {
+					foo : { nested : "a" },
+					bar : { nested : 10 },
+					baz : { nested : "c" }
+				},
+				schema : {
+					type : "indexObject",
+					schema : [
+						{ name : "nested", type : "string", required : true }
+					],
+					deleteOnInvalid : true
+				},
+				resultData : {
+					foo : { nested : "a" },
+					baz : { nested : "c" }
+				},
+				success : true
+			},
+			{
+				it : "indexObject - deleteExtraKeys from failure object",
+				data : {
+					foo : { nested : "a", fake : "b" }
+				},
+				schema : {
+					type : "indexObject",
+					schema : [
+						{ name : "nested", type : "string", required : true }
+					],
+					deleteExtraKeys : true
+				},
+				resultData : {
+					foo : { nested : "a" }
+				},
+				success : true
+			},
+			{
+				it : "indexObject - allowExtraKeys from object",
+				data : {
+					foo : { nested : "a", fake : "b" }
+				},
+				schema : {
+					type : "indexObject",
+					schema : [
+						{ name : "nested", type : "string", required : true }
+					],
+					allowExtraKeys : false
+				},
+				resultData : {
+					foo : { nested : "a", fake : "b" }
+				},
+				success : false,
+				err : /Object 'foo' contains extra key 'fake' not declared in schema./
+			},
+			{
+				it : "indexObject - deep nested",
+				data : {
+					foo : [
+						{ key : { foo : 1, bar : 2, baz : 3 } },
+						{ fake : "value" },
+						{ key : { foo : 5, baz : "string" }, fake : "value2" }
+					]
+				},
+				schema : {
+					type : "object",
+					schema : [
+						{
+							name : "foo",
+							type : "array",
+							schema : {
+								type : "object",
+								schema : [
+									{ name : "key", type : "indexObject", schema : { type : "number" } },
+									{ name : "fake", type : "string" }
+								],
+								allowExtraKeys : false
+							}
+						}
+					],
+					allowExtraKeys : false
+				},
+				success : false,
+				err : /Field 'foo.2.key.baz' is not of type 'number'/
+			},
+			{
+				it : "custom - simple",
+				data : "foo",
+				schema : {
+					name : "foo",
+					type : "string",
+					custom : [{ label : "Valid", fn : function(args) { return true; } }]
+				},
+				success : true
+			},
+			{
+				it : "custom - simple invalid",
+				data : "foo",
+				schema : {
+					name : "foo",
+					type : "string",
+					custom : [{ label : "Invalid", fn : function(args) { return false; } }]
+				},
+				success : false,
+				err : /Field failed custom validation 'Invalid'/
+			},
+			{
+				it : "custom - multiple with failure",
+				data : "foo",
+				schema : {
+					name : "foo",
+					type : "string",
+					custom : [
+						{ label : "Valid", fn : function(args) { return true; } },
+						{ label : "Invalid", fn : function(args) { return false; } },
+						{ label : "Valid", fn : function(args) { return true; } }
+					]
+				},
+				success : false,
+				err : /Field failed custom validation 'Invalid'/
+			},
+			{
+				it : "custom - traditional failure + custom",
+				data : 5,
+				schema : {
+					name : "foo",
+					type : "string",
+					custom : [
+						{ label : "Invalid", fn : function() { return false; } }
+					]
+				},
+				success : false,
+				err : [
+					/Field is not of type 'string'/
+				]
+			},
+			{
+				it : "custom - with multiple failures",
+				data : 5,
+				schema : {
+					name : "foo",
+					type : "number",
+					custom : [
+						{ label : "Invalid1", fn : function() { return false; } },
+						{ label : "Valid", fn : function() { return true; } },
+						{ label : "Invalid2", fn : function() { return false; } }
+					]
+				},
+				success : false,
+				err : [
+					/Field failed custom validation 'Invalid1'/,
+					/Field failed custom validation 'Invalid2'/
+				]
+			}
+		]
+		
+		tests.forEach(function(test) {
+			it(test.it, function() {
+				var valid = validator.validate(test.data, test.schema);
+				
+				assert.strictEqual(valid.success, test.success);
+				
+				if (test.err !== undefined) {
+					var temp = test.err instanceof Array ? test.err : [test.err];
+					assert.strictEqual(valid.errors.length, temp.length);
+					temp.forEach(function(val) {
+						assert.ok(valid.err.message.match(val));
+					});
+				}
+				
+				if (test.resultData !== undefined) {
+					assert.deepStrictEqual(valid.data, test.resultData);
+				}
+			});
+		});
 	});
 });

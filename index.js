@@ -141,63 +141,77 @@ define(function(require, exports, module) {
 			if (! (value instanceof Date)) {
 				simpleError = true;
 			}
+		} else if (def.type === "indexObject") {
+			if (typeof value !== "object") {
+				simpleError = true;
+			} else if (def.schema !== undefined) {
+				forEach(value, function(val, i) {
+					var schema = def.schema instanceof Array ? {
+						type : "object",
+						schema : def.schema,
+						deleteExtraKeys : def.deleteExtraKeys,
+						allowExtraKeys : def.allowExtraKeys
+					} : def.schema;
+					
+					var tempContext = [].slice.call(contextArray);
+					tempContext.push(i);
+					
+					var tempContextObj = [].slice.call(contextArrayObj);
+					tempContextObj.push(value);
+					
+					var tempReturn = validateField(val, schema, tempContext, tempContextObj, rootObj, value);
+					
+					if (tempReturn.errors.length > 0) {
+						if (def.deleteOnInvalid) {
+							delete value[i];
+						} else {
+							myErrors = myErrors.concat(tempReturn.errors);
+						}
+					}
+				});
+			}
 		} else if (def.type === "object" || def.type === "indexObject") {
 			if (typeof value !== "object") {
 				simpleError = true;
 			} else if (def.schema !== undefined) {
-				if (def.type === "object") {
-					var tempObject = {
-						key : value
-					}
-				} else {
-					var tempObject = value;
-				}
+				// set aside field names for use in when validating extra keys
+				var fields = [];
 				
-				
-				forEach(tempObject, function(val, i) {
-					// set aside field names for use in when validating extra keys
-					var fields = [];
+				def.schema.forEach(function(val2, i2) {
+					fields.push(val2.name);
 					
-					def.schema.forEach(function(val2, i2) {
-						fields.push(val2.name);
-						
-						var tempContext = [].slice.call(contextArray);
-						if (def.type === "indexObject") {
-							// on indexObject we want to push the key
-							tempContext.push(i);
+					var tempContext = [].slice.call(contextArray);
+					tempContext.push(val2.name);
+					
+					var tempContextObj = [].slice.call(contextArrayObj);
+					tempContextObj.push(value);
+					
+					var tempReturn = validateField(value[val2.name], val2, tempContext, tempContextObj, rootObj, value);
+					
+					if (tempReturn.data !== undefined) {
+						value[val2.name] = tempReturn.data;
+					}
+					
+					if (tempReturn.errors.length > 0) {
+						if (val2.deleteOnInvalid) {
+							delete value[val2.name];
+						} else {
+							myErrors = myErrors.concat(tempReturn.errors);
 						}
-						tempContext.push(val2.name);
-						
-						var tempContextObj = [].slice.call(contextArrayObj);
-						tempContextObj.push(value);
-						
-						var tempReturn = validateField(val[val2.name], val2, tempContext, tempContextObj, rootObj, value);
-						
-						if (tempReturn.data !== undefined) {
-							val[val2.name] = tempReturn.data;
-						}
-						
-						if (tempReturn.errors.length > 0) {
-							if (val2.deleteOnInvalid) {
-								delete val[val2.name];
+					}
+				});
+				
+				if (def.allowExtraKeys === false || def.deleteExtraKeys === true) {
+					forEach(value, function(val2, i2) {
+						if (fields.indexOf(i2) === -1) {
+							if (def.deleteExtraKeys === true) {
+								delete value[i2];
 							} else {
-								myErrors = myErrors.concat(tempReturn.errors);
+								myErrors.push({ err : new Error("Object" + contextToString(contextArray) + "contains extra key '" + i2 + "' not declared in schema."), contextArray : contextArray });
 							}
 						}
 					});
-					
-					if (def.allowExtraKeys === false || def.deleteExtraKeys === true) {
-						forEach(val, function(val2, i2) {
-							if (fields.indexOf(i2) === -1) {
-								if (def.deleteExtraKeys === true) {
-									delete val[i2];
-								} else {
-									myErrors.push({ err : new Error("Object" + contextToString(contextArray) + "contains extra key '" + i2 + "' not declared in schema."), contextArray : contextArray });
-								}
-							}
-						});
-					}
-				});
+				}
 			}
 		} else if (def.type === "array") {
 			if (! (value instanceof Array)) {
@@ -253,6 +267,14 @@ define(function(require, exports, module) {
 		if (simpleError) {
 			var err = new Error("Field" + contextToString(contextArray) + "is not of type '" + def.type + "'.");
 			myErrors.push({ err : err, contextArray : contextArray });
+		} else if (def.custom !== undefined) {
+			def.custom.forEach(function(val, i) {
+				var valid = val.fn({ value : value, current : currentObj });
+				if (!valid) {
+					var err = new Error("Field" + contextToString(contextArray) + "failed custom validation '" + val.label + "'.");
+					myErrors.push({ err : err, contextArray : contextArray });
+				}
+			});
 		}
 		
 		if (myErrors.length > 0) {

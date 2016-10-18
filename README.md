@@ -91,9 +91,41 @@ var temp = jsvalidator.validate(data, {
         }
     ]
 })
+```
 
+### Validing indexObjects
 
+indexObject's are used in cases where you the key names are arbitrary but the data in each key conforms to a specific schema.
 
+* Note: When validating indexObjects, you can pass schema as an object `{}` which will validate each key as exactly that type. If schema is passed as an array then it will validate each key as an object using that schema.
+
+```js
+// ensures all keys in the original data are of type number, does not validate the key names themselves.
+var temp = jsvalidator.validate({
+    foo : 5,
+    bar : 10,
+    baz : 5
+}, {
+    type : "indexObject",
+    schema : {
+        type : "number"
+    }
+});
+```
+
+```js
+// ensures all keys in the original data are objects with the matching schema.
+var temp = jsvalidator.validate({
+    foo : { nested : "stringValue" },
+    bar : { nested : "stringValue2" },
+    baz : { nested : "stringValue3" }
+}, {
+    type : "indexObject",
+    schema : [
+        { name : "nested", type : "string", required : true }
+    ],
+    allowExtraKeys : false
+});
 ```
 
 ### Validating function args
@@ -223,4 +255,5 @@ var temp = jsvalidator.validate(data, {
 * `date` - Key is `instanceof Date`
 * `array` - Arrays which pass `instanceof Array`
 * `object` - Objects which pass `typeof "object"`
+* `indexObject` - Objects which have key values where the key names are unknown but the values match a schema such as { foo : number, bar : number, baz : number }
 * `function` - Key is a `typeof "function"`
