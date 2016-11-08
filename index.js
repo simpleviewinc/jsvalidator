@@ -153,10 +153,10 @@ define(function(require, exports, module) {
 						allowExtraKeys : def.allowExtraKeys
 					} : def.schema;
 					
-					var tempContext = [].slice.call(contextArray);
+					var tempContext = cloneArray(contextArray);
 					tempContext.push(i);
 					
-					var tempContextObj = [].slice.call(contextArrayObj);
+					var tempContextObj = cloneArray(contextArrayObj);
 					tempContextObj.push(value);
 					
 					var tempReturn = validateField(val, schema, tempContext, tempContextObj, rootObj, value);
@@ -170,7 +170,7 @@ define(function(require, exports, module) {
 					}
 				});
 			}
-		} else if (def.type === "object" || def.type === "indexObject") {
+		} else if (def.type === "object") {
 			if (typeof value !== "object") {
 				simpleError = true;
 			} else if (def.schema !== undefined) {
@@ -180,10 +180,10 @@ define(function(require, exports, module) {
 				def.schema.forEach(function(val2, i2) {
 					fields.push(val2.name);
 					
-					var tempContext = [].slice.call(contextArray);
+					var tempContext = cloneArray(contextArray);
 					tempContext.push(val2.name);
 					
-					var tempContextObj = [].slice.call(contextArrayObj);
+					var tempContextObj = cloneArray(contextArrayObj);
 					tempContextObj.push(value);
 					
 					var tempReturn = validateField(value[val2.name], val2, tempContext, tempContextObj, rootObj, value);
@@ -218,10 +218,10 @@ define(function(require, exports, module) {
 				simpleError = true;
 			} else if (def.schema !== undefined) {
 				value.forEach(function(val, i) {
-					var tempContext = [].slice.call(contextArray);
+					var tempContext = cloneArray(contextArray);
 					tempContext.push(i);
 					
-					var tempContextObj = [].slice.call(contextArrayObj);
+					var tempContextObj = cloneArray(contextArrayObj);
 					tempContextObj.push(value);
 					
 					var tempReturn = validateField(val, def.schema, tempContext, tempContextObj, rootObj, value);
@@ -242,10 +242,10 @@ define(function(require, exports, module) {
 				simpleError = true;
 			} else {
 				forEach(value, function(val, i) {
-					var tempContext = [].slice.call(contextArray);
+					var tempContext = cloneArray(contextArray);
 					tempContext.push(i);
 					
-					var tempContextObj = [].slice.call(contextArrayObj);
+					var tempContextObj = cloneArray(contextArrayObj);
 					tempContextObj.push(value);
 					
 					var tempReturn = validateField(val, def.schema, tempContext, tempContextObj, rootObj, value);
@@ -288,6 +288,19 @@ define(function(require, exports, module) {
 		}
 		
 		return returnData;
+	}
+	
+	var cloneArray = function(arr) {
+		var temp = [];
+		
+		// without the early escape V8 deopts due to the for loop below and possible out of bound index access
+		if (arr.length === 0) { return temp; }
+		
+		for(var i = 0; i < arr.length; i++) {
+			temp[i] = arr[i];
+		}
+		
+		return temp;
 	}
 
 	var contextToString = function(contextArray) {
