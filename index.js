@@ -33,27 +33,6 @@ define(function(require, exports, module) {
 		def.defaultOnInvalid = def.defaultOnInvalid !== undefined ? def.defaultOnInvalid : false;
 		def.throwOnInvalid = def.throwOnInvalid !== undefined ? def.throwOnInvalid : false;
 		
-		var getDefault = function() {
-			if (typeof def.default === "function") {
-				var args = {
-					rootObj : rootObj,
-					value : value,
-					def : def,
-					contextArray : contextArray,
-					contextArrayObj : contextArrayObj,
-					current : currentObj
-				};
-				
-				if (contextArrayObj[contextArrayObj.length - 2] instanceof Array) {
-					args.i = contextArray[contextArray.length - 2];
-				}
-				
-				return def.default(args);
-			} else {
-				return def.default;
-			}
-		}
-		
 		var exists = value !== undefined;
 		
 		if (!exists && def.required) {
@@ -74,7 +53,7 @@ define(function(require, exports, module) {
 		
 		if (!exists && !def.required && def.default !== undefined) {
 			// doesn't exist, not required, has default then use default
-			value = getDefault();
+			value = getDefault(value, def, contextArray, contextArrayObj, rootObj, currentObj);
 			returnData.data = value;
 			
 			if (def.type === "object" || def.type === "array") {
@@ -279,7 +258,7 @@ define(function(require, exports, module) {
 		
 		if (myErrors.length > 0) {
 			if (def.defaultOnInvalid) {
-				returnData.data = getDefault();
+				returnData.data = getDefault(value, def, contextArray, contextArrayObj, rootObj, currentObj);
 			} else if (def.throwOnInvalid) {
 				throw concatErrors(rootObj, myErrors);
 			} else {
@@ -288,6 +267,27 @@ define(function(require, exports, module) {
 		}
 		
 		return returnData;
+	}
+	
+	var getDefault = function(value, def, contextArray, contextArrayObj, rootObj, currentObj) {
+		if (typeof def.default === "function") {
+			var args = {
+				rootObj : rootObj,
+				value : value,
+				def : def,
+				contextArray : contextArray,
+				contextArrayObj : contextArrayObj,
+				current : currentObj
+			};
+			
+			if (contextArrayObj[contextArrayObj.length - 2] instanceof Array) {
+				args.i = contextArray[contextArray.length - 2];
+			}
+			
+			return def.default(args);
+		} else {
+			return def.default;
+		}
 	}
 	
 	var cloneArray = function(arr) {
