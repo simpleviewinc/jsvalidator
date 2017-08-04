@@ -668,7 +668,7 @@ describe(__filename, function() {
 		]
 		
 		tests.forEach(function(test) {
-			it(test.it, function() {
+			(test.only ? it.only : it)(test.it, function() {
 				var valid = validator.validate(test.data, test.schema);
 				
 				assert.strictEqual(valid.success, test.success);

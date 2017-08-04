@@ -8,12 +8,23 @@ Comprehensive recursive Javscript validator for objects, arrays, strings and mor
 
 # Features
 
-0. Validate Objects, Arrays, and Arrays of Objects, Objects with Arrays, strings, numbers, classes and any recursive combination in between.
-0. There is no limit on how deeply nested the data you are validating. You can have objects with objects with arrays of yet more objects.
-0. Specify default values for fields anywhere in the tree.
-0. Specify what fields are required and what fields are optional while still enforcing the type on both.
-0. Perfect for validating complicated input to functions or from 3rd party APIs.
-0. Can return a single error which states all of the validation problems in the object. Helps to provide developers with exactly what is wrong with their arguments.
+1. Validate Objects, Arrays, and Arrays of Objects, Objects with Arrays, strings, numbers, classes and any recursive combination in between.
+1. There is no limit on how deeply nested the data you are validating. You can have objects with objects with arrays of yet more objects.
+1. Specify default values for fields anywhere in the tree.
+1. Specify what fields are required and what fields are optional while still enforcing the type on both.
+1. Perfect for validating complicated input to functions or from 3rd party APIs.
+1. Can return a single error which states all of the validation problems in the object. Helps to provide developers with exactly what is wrong with their arguments.
+
+# Current Benchmark
+
+```
+: npm run simplebench
+> jsvalidator@0.9.0 simplebench /sv/gits/jsvalidator
+> simplebench testing/benchmark.js
+
+Group:  default
+benchmark - count: 334, ops/sec: 334
+```
 
 # Getting Started
 

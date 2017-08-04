@@ -11,7 +11,10 @@ define(function(require, exports, module) {
 	var validate = function(obj, schema) {
 		var contextArray = [];
 		var contextArrayObj = [];
-		var returnData = validateField(obj, schema, contextArray, contextArrayObj, obj, obj);
+		
+		var newSchema = defaultSchema(schema);
+		
+		var returnData = validateField(obj, newSchema, contextArray, contextArrayObj, obj, obj);
 		
 		returnData.success = returnData.errors.length === 0;
 		
@@ -21,17 +24,48 @@ define(function(require, exports, module) {
 		
 		return returnData;
 	}
+	
+	var defaultSchema = function(def) {
+		var newSchema = {
+			type : def.type,
+			name : def.name,
+			enum : def.enum,
+			default : def.default,
+			max : def.max,
+			min : def.min,
+			regex : def.regex,
+			class : def.class,
+			custom : def.custom,
+			required : def.required !== undefined ? def.required : false,
+			schema : 
+				def.type === "indexObject" && def.schema instanceof Array ? [{
+					type : "object",
+					schema : def.schema,
+					deleteExtraKeys : def.deleteExtraKeys,
+					allowExtraKeys : def.allowExtraKeys
+				}] :
+				def.schema instanceof Array ? def.schema :
+				def.schema !== undefined ? [def.schema] :
+				undefined
+			,
+			allowExtraKeys : def.allowExtraKeys !== undefined ? def.allowExtraKeys : true,
+			deleteExtraKeys : def.deleteExtraKeys !== undefined ? def.deleteExtraKeys : false,
+			defaultOnInvalid : def.defaultOnInvalid !== undefined ? def.defaultOnInvalid : false,
+			deleteOnInvalid : def.deleteOnInvalid !== undefined ? def.deleteOnInvalid : undefined,
+			throwOnInvalid : def.throwOnInvalid !== undefined ? def.throwOnInvalid : false
+		}
+		
+		if (newSchema.schema !== undefined) {
+			for(var i = 0; i < newSchema.schema.length; i++) {
+				newSchema.schema[i] = defaultSchema(newSchema.schema[i]);
+			}
+		}
+		
+		return newSchema;
+	}
 
 	var validateField = function(value, def, contextArray, contextArrayObj, rootObj, currentObj) {
 		var returnData = getDefaultReturn(value);
-		
-		def.required = def.required !== undefined ? def.required : false;
-		def.default = def.default !== undefined ? def.default : undefined;
-		def.schema = def.schema !== undefined ? def.schema : undefined;
-		def.allowExtraKeys = def.allowExtraKeys !== undefined ? def.allowExtraKeys : true;
-		def.deleteExtraKeys = def.deleteExtraKeys !== undefined ? def.deleteExtraKeys : false;
-		def.defaultOnInvalid = def.defaultOnInvalid !== undefined ? def.defaultOnInvalid : false;
-		def.throwOnInvalid = def.throwOnInvalid !== undefined ? def.throwOnInvalid : false;
 		
 		var exists = value !== undefined;
 		
@@ -80,25 +114,7 @@ define(function(require, exports, module) {
 			if (typeof value !== "string") {
 				simpleError = true;
 			} else {
-				if (def.enum !== undefined && def.enum.indexOf(value) === -1) {
-					var err = new Error("Field" + contextToString(contextArray) + "must be a value in '" + def.enum + "'.");
-					myErrors.push({ err : err, contextArray : contextArray });
-				}
-				
-				if (def.min !== undefined && value.length < def.min) {
-					var err = new Error("Field" + contextToString(contextArray) + "has a minimum length of '" + def.min + "'.");
-					myErrors.push({ err : err, contextArray : contextArray });
-				}
-				
-				if (def.max !== undefined && value.length > def.max) {
-					var err = new Error("Field" + contextToString(contextArray) + "has a maximum length of '" + def.max + "'.");
-					myErrors.push({ err : err, contextArray : contextArray });
-				}
-				
-				if (def.regex !== undefined && !value.match(def.regex)) {
-					var err = new Error("Field" + contextToString(contextArray) + "does not match a regex of '" + def.regex + "'.");
-					myErrors.push({ err : err, contextArray : contextArray });
-				}
+				validateString(value, def, contextArray, contextArrayObj, rootObj, myErrors);
 			}
 		} else if (def.type === "boolean") {
 			if (typeof value !== "boolean") {
@@ -124,119 +140,25 @@ define(function(require, exports, module) {
 			if (typeof value !== "object") {
 				simpleError = true;
 			} else if (def.schema !== undefined) {
-				forEach(value, function(val, i) {
-					var schema = def.schema instanceof Array ? {
-						type : "object",
-						schema : def.schema,
-						deleteExtraKeys : def.deleteExtraKeys,
-						allowExtraKeys : def.allowExtraKeys
-					} : def.schema;
-					
-					var tempContext = cloneArray(contextArray);
-					tempContext.push(i);
-					
-					var tempContextObj = cloneArray(contextArrayObj);
-					tempContextObj.push(value);
-					
-					var tempReturn = validateField(val, schema, tempContext, tempContextObj, rootObj, value);
-					
-					if (tempReturn.errors.length > 0) {
-						if (def.deleteOnInvalid) {
-							delete value[i];
-						} else {
-							myErrors = myErrors.concat(tempReturn.errors);
-						}
-					}
-				});
+				validateIndexObject(value, def, contextArray, contextArrayObj, rootObj, myErrors);
 			}
 		} else if (def.type === "object") {
 			if (typeof value !== "object") {
 				simpleError = true;
 			} else if (def.schema !== undefined) {
-				// set aside field names for use in when validating extra keys
-				var fields = [];
-				
-				def.schema.forEach(function(val2, i2) {
-					fields.push(val2.name);
-					
-					var tempContext = cloneArray(contextArray);
-					tempContext.push(val2.name);
-					
-					var tempContextObj = cloneArray(contextArrayObj);
-					tempContextObj.push(value);
-					
-					var tempReturn = validateField(value[val2.name], val2, tempContext, tempContextObj, rootObj, value);
-					
-					if (tempReturn.data !== undefined) {
-						value[val2.name] = tempReturn.data;
-					}
-					
-					if (tempReturn.errors.length > 0) {
-						if (val2.deleteOnInvalid) {
-							delete value[val2.name];
-						} else {
-							myErrors = myErrors.concat(tempReturn.errors);
-						}
-					}
-				});
-				
-				if (def.allowExtraKeys === false || def.deleteExtraKeys === true) {
-					forEach(value, function(val2, i2) {
-						if (fields.indexOf(i2) === -1) {
-							if (def.deleteExtraKeys === true) {
-								delete value[i2];
-							} else {
-								myErrors.push({ err : new Error("Object" + contextToString(contextArray) + "contains extra key '" + i2 + "' not declared in schema."), contextArray : contextArray });
-							}
-						}
-					});
-				}
+				validateObject(value, def, contextArray, contextArrayObj, rootObj, myErrors);
 			}
 		} else if (def.type === "array") {
 			if (! (value instanceof Array)) {
 				simpleError = true;
 			} else if (def.schema !== undefined) {
-				value.forEach(function(val, i) {
-					var tempContext = cloneArray(contextArray);
-					tempContext.push(i);
-					
-					var tempContextObj = cloneArray(contextArrayObj);
-					tempContextObj.push(value);
-					
-					var tempReturn = validateField(val, def.schema, tempContext, tempContextObj, rootObj, value);
-					
-					value[i] = tempReturn.data;
-					
-					if (tempReturn.errors.length > 0) {
-						if (def.schema.deleteOnInvalid) {
-							value.splice(i, 1);
-						} else {
-							myErrors = myErrors.concat(tempReturn.errors);
-						}
-					}
-				});
+				validateArray(value, def, contextArray, contextArrayObj, rootObj, myErrors);
 			}
 		} else if (def.type === "simpleObject") {
 			if (typeof value !== "object") {
 				simpleError = true;
 			} else {
-				forEach(value, function(val, i) {
-					var tempContext = cloneArray(contextArray);
-					tempContext.push(i);
-					
-					var tempContextObj = cloneArray(contextArrayObj);
-					tempContextObj.push(value);
-					
-					var tempReturn = validateField(val, def.schema, tempContext, tempContextObj, rootObj, value);
-					
-					if (tempReturn.errors.length > 0) {
-						if (def.schema.deleteOnInvalid) {
-							delete value[i];
-						} else {
-							myErrors = myErrors.concat(tempReturn.errors);
-						}
-					}
-				});
+				validateSimpleObject(value, def, contextArray, contextArrayObj, rootObj, myErrors);
 			}
 		} else {
 			// invalid type specified throw error, this is not a validation error but a developer error, so we throw
@@ -269,6 +191,141 @@ define(function(require, exports, module) {
 		return returnData;
 	}
 	
+	var validateArray = function(value, def, contextArray, contextArrayObj, rootObj, myErrors) {
+		var val;
+		for(var i = 0; i < value.length; i++) {
+			val = value[i];
+			contextArray.push(i);
+			contextArrayObj.push(value);
+			
+			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value);
+			
+			contextArray.pop();
+			contextArrayObj.pop();
+			
+			value[i] = tempReturn.data;
+			
+			if (tempReturn.errors.length > 0) {
+				if (def.schema[0].deleteOnInvalid) {
+					value.splice(i, 1);
+				} else {
+					myErrors.push.apply(myErrors, tempReturn.errors);
+				}
+			}
+		}
+	}
+	
+	var validateObject = function(value, def, contextArray, contextArrayObj, rootObj, myErrors) {
+		// set aside field names for use in when validating extra keys
+		var fields = [];
+		
+		var val;
+		for(var i = 0; i < def.schema.length; i++) {
+			val = def.schema[i];
+			fields.push(val.name);
+			
+			contextArray.push(val.name);
+			contextArrayObj.push(value);
+			
+			var tempReturn = validateField(value[val.name], val, contextArray, contextArrayObj, rootObj, value);
+			
+			contextArray.pop();
+			contextArrayObj.pop();
+			
+			if (tempReturn.data !== undefined) {
+				value[val.name] = tempReturn.data;
+			}
+			
+			if (tempReturn.errors.length > 0) {
+				if (val.deleteOnInvalid) {
+					delete value[val.name];
+				} else {
+					myErrors.push.apply(myErrors, tempReturn.errors);
+				}
+			}
+		}
+		
+		if (def.allowExtraKeys === false || def.deleteExtraKeys === true) {
+			for(var i in value) {
+				if (fields.indexOf(i) === -1) {
+					if (def.deleteExtraKeys === true) {
+						delete value[i];
+					} else {
+						myErrors.push({ err : new Error("Object" + contextToString(contextArray) + "contains extra key '" + i + "' not declared in schema."), contextArray : contextArray });
+					}
+				}
+			}
+		}
+	}
+	
+	var validateIndexObject = function(value, def, contextArray, contextArrayObj, rootObj, myErrors) {
+		var val;
+		for(var i in value) {
+			val = value[i];
+			
+			contextArray.push(i);
+			contextArrayObj.push(value);
+			
+			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value);
+			
+			contextArray.pop();
+			contextArrayObj.pop();
+			
+			if (tempReturn.errors.length > 0) {
+				if (def.deleteOnInvalid) {
+					delete value[i];
+				} else {
+					myErrors.push.apply(myErrors, tempReturn.errors);
+				}
+			}
+		}
+	}
+	
+	var validateSimpleObject = function(value, def, contextArray, contextArrayObj, rootObj, myErrors) {
+		var val;
+		for(var i in value) {
+			val = value[i];
+			
+			contextArray.push(i);
+			contextArrayObj.push(value);
+			
+			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value);
+			
+			contextArray.pop();
+			contextArrayObj.pop();
+			
+			if (tempReturn.errors.length > 0) {
+				if (def.schema[0].deleteOnInvalid) {
+					delete value[i];
+				} else {
+					myErrors.push.apply(myErrors, tempReturn.errors);
+				}
+			}
+		}
+	}
+	
+	var validateString = function(value, def, contextArray, contextArrayObj, rootObj, myErrors) {
+		if (def.enum !== undefined && def.enum.indexOf(value) === -1) {
+			var err = new Error("Field" + contextToString(contextArray) + "must be a value in '" + def.enum + "'.");
+			myErrors.push({ err : err, contextArray : contextArray });
+		}
+		
+		if (def.min !== undefined && value.length < def.min) {
+			var err = new Error("Field" + contextToString(contextArray) + "has a minimum length of '" + def.min + "'.");
+			myErrors.push({ err : err, contextArray : contextArray });
+		}
+		
+		if (def.max !== undefined && value.length > def.max) {
+			var err = new Error("Field" + contextToString(contextArray) + "has a maximum length of '" + def.max + "'.");
+			myErrors.push({ err : err, contextArray : contextArray });
+		}
+		
+		if (def.regex !== undefined && !value.match(def.regex)) {
+			var err = new Error("Field" + contextToString(contextArray) + "does not match a regex of '" + def.regex + "'.");
+			myErrors.push({ err : err, contextArray : contextArray });
+		}
+	}
+	
 	var getDefault = function(value, def, contextArray, contextArrayObj, rootObj, currentObj) {
 		if (typeof def.default === "function") {
 			var args = {
@@ -289,19 +346,6 @@ define(function(require, exports, module) {
 			return def.default;
 		}
 	}
-	
-	var cloneArray = function(arr) {
-		var temp = [];
-		
-		// without the early escape V8 deopts due to the for loop below and possible out of bound index access
-		if (arr.length === 0) { return temp; }
-		
-		for(var i = 0; i < arr.length; i++) {
-			temp[i] = arr[i];
-		}
-		
-		return temp;
-	}
 
 	var contextToString = function(contextArray) {
 		return contextArray.length === 0 ? " " : " '" + contextArray.join(".") + "' ";
@@ -318,12 +362,6 @@ define(function(require, exports, module) {
 			errors : [],
 			err : null,
 			success : false
-		}
-	}
-
-	var forEach = function(obj, callback) {
-		for(var i in obj) {
-			callback(obj[i], i);
 		}
 	}
 
