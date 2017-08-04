@@ -27,16 +27,6 @@ describe(__filename, function() {
 		assert.ok(data.foo === "foo");
 	});
 	
-	it("should replace invalid value with default", function() {
-		var data = {
-			foo : "some string"
-		};
-		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "number", default : 1, defaultOnInvalid : true }] });
-		
-		assert.ok(returnData.success);
-		assert.ok(data.foo === 1);
-	});
-	
 	it("should run default object back through validator", function() {
 		assert.deepEqual(validator.validate(undefined, { type : "object", schema : [{ name : "foo", type : "string", default : "foo" }], default : {} }).data, { foo : "foo" });
 		assert.equal(validator.validate(undefined, { type : "object", schema : [{ name : "foo", type : "string" }], default : { foo : 5 } }).success, false);
@@ -271,11 +261,6 @@ describe(__filename, function() {
 		assert.ok(!returnData.success);
 		assert.ok(returnData.err.message.match(/Field 'bar' is not of type 'string'/));
 		
-		var data = { foo : "string", bar : 123, baz : "another" }
-		var returnData = validator.validate(data, { type : "simpleObject", schema : { type : "string", deleteOnInvalid : true } });
-		assert.ok(returnData.success);
-		assert.deepEqual(returnData.data, { foo : "string", baz : "another" });
-		
 		var data = { inner : { foo : "string", bar : 123 } }
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "inner", type : "simpleObject", schema : { type : "string" } }] });
 		assert.ok(!returnData.success);
@@ -307,17 +292,6 @@ describe(__filename, function() {
 			
 			assert.equal(result.success, val[1]);
 		});
-	});
-	
-	it("should delete object key on invalid in object", function() {
-		var data = {
-			foo : "bar",
-			bar : "baz"
-		};
-		
-		var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "number", deleteOnInvalid : true }] });
-		
-		assert.ok(data.foo === undefined);
 	});
 	
 	it("should fail validation on extra keys", function() {
@@ -404,32 +378,6 @@ describe(__filename, function() {
 		assert.ok(returnData.err.message.match(/Field '2.foo' is not of type 'string'\./));
 	});
 	
-	it("should delete invalid array entries", function() {
-		var data = [1,2,"foo"];
-		
-		var returnData = validator.validate(data, { type : "array", schema : { type : "number", deleteOnInvalid : true } });
-		
-		assert.ok(returnData.success);
-	});
-	
-	it("should default invalid array entries", function() {
-		var data = [1,2,"foo"];
-		
-		var returnData = validator.validate(data, { type : "array", schema : { type : "number", default : 3, defaultOnInvalid : true } });
-		
-		assert.ok(returnData.success);
-		assert.ok(data[2] === 3);
-	});
-	
-	it("should default invalid arrays", function() {
-		var data = [1,2,"foo"];
-		
-		var returnData = validator.validate(data, { type : "array", schema : { type : "number" }, defaultOnInvalid : [], default : [] });
-		
-		assert.ok(returnData.success);
-		assert.ok(returnData.data.length === 0);
-	});
-	
 	it("should concat to a single error", function() {
 		var data = { foo : "bar", bar : 1, baz : "moo" };
 		var temp = validator.validate(data, {
@@ -510,26 +458,6 @@ describe(__filename, function() {
 				},
 				success : false,
 				err : /Field 'bar.nested' is not of type 'string'/
-			},
-			{
-				it : "indexObject - delete failure simple",
-				data : {
-					foo : { nested : "a" },
-					bar : { nested : 10 },
-					baz : { nested : "c" }
-				},
-				schema : {
-					type : "indexObject",
-					schema : [
-						{ name : "nested", type : "string", required : true }
-					],
-					deleteOnInvalid : true
-				},
-				resultData : {
-					foo : { nested : "a" },
-					baz : { nested : "c" }
-				},
-				success : true
 			},
 			{
 				it : "indexObject - deleteExtraKeys from failure object",

@@ -50,8 +50,6 @@ define(function(require, exports, module) {
 			,
 			allowExtraKeys : def.allowExtraKeys !== undefined ? def.allowExtraKeys : true,
 			deleteExtraKeys : def.deleteExtraKeys !== undefined ? def.deleteExtraKeys : false,
-			defaultOnInvalid : def.defaultOnInvalid !== undefined ? def.defaultOnInvalid : false,
-			deleteOnInvalid : def.deleteOnInvalid !== undefined ? def.deleteOnInvalid : undefined,
 			throwOnInvalid : def.throwOnInvalid !== undefined ? def.throwOnInvalid : false
 		}
 		
@@ -179,9 +177,7 @@ define(function(require, exports, module) {
 		}
 		
 		if (myErrors.length > 0) {
-			if (def.defaultOnInvalid) {
-				returnData.data = getDefault(value, def, contextArray, contextArrayObj, rootObj, currentObj);
-			} else if (def.throwOnInvalid) {
+			if (def.throwOnInvalid) {
 				throw concatErrors(rootObj, myErrors);
 			} else {
 				returnData.errors = returnData.errors.concat(myErrors);
@@ -195,6 +191,7 @@ define(function(require, exports, module) {
 		var val;
 		for(var i = 0; i < value.length; i++) {
 			val = value[i];
+			
 			contextArray.push(i);
 			contextArrayObj.push(value);
 			
@@ -206,11 +203,7 @@ define(function(require, exports, module) {
 			value[i] = tempReturn.data;
 			
 			if (tempReturn.errors.length > 0) {
-				if (def.schema[0].deleteOnInvalid) {
-					value.splice(i, 1);
-				} else {
-					myErrors.push.apply(myErrors, tempReturn.errors);
-				}
+				myErrors.push.apply(myErrors, tempReturn.errors);
 			}
 		}
 	}
@@ -237,11 +230,7 @@ define(function(require, exports, module) {
 			}
 			
 			if (tempReturn.errors.length > 0) {
-				if (val.deleteOnInvalid) {
-					delete value[val.name];
-				} else {
-					myErrors.push.apply(myErrors, tempReturn.errors);
-				}
+				myErrors.push.apply(myErrors, tempReturn.errors);
 			}
 		}
 		
@@ -272,11 +261,7 @@ define(function(require, exports, module) {
 			contextArrayObj.pop();
 			
 			if (tempReturn.errors.length > 0) {
-				if (def.deleteOnInvalid) {
-					delete value[i];
-				} else {
-					myErrors.push.apply(myErrors, tempReturn.errors);
-				}
+				myErrors.push.apply(myErrors, tempReturn.errors);
 			}
 		}
 	}
@@ -295,11 +280,7 @@ define(function(require, exports, module) {
 			contextArrayObj.pop();
 			
 			if (tempReturn.errors.length > 0) {
-				if (def.schema[0].deleteOnInvalid) {
-					delete value[i];
-				} else {
-					myErrors.push.apply(myErrors, tempReturn.errors);
-				}
+				myErrors.push.apply(myErrors, tempReturn.errors);
 			}
 		}
 	}
