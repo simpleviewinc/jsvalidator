@@ -11,10 +11,18 @@ define(function(require, exports, module) {
 	var validate = function(obj, schema) {
 		var contextArray = [];
 		var contextArrayObj = [];
+		var myErrors = [];
 		
 		var newSchema = defaultSchema(schema);
 		
-		var returnData = validateField(obj, newSchema, contextArray, contextArrayObj, obj, obj);
+		var data = validateField(obj, newSchema, contextArray, contextArrayObj, obj, obj, myErrors);
+		
+		var returnData = {
+			data : data,
+			errors : myErrors,
+			err : null,
+			success : false
+		}
 		
 		returnData.success = returnData.errors.length === 0;
 		
@@ -62,9 +70,7 @@ define(function(require, exports, module) {
 		return newSchema;
 	}
 
-	var validateField = function(value, def, contextArray, contextArrayObj, rootObj, currentObj) {
-		var returnData = getDefaultReturn(value);
-		
+	var validateField = function(value, def, contextArray, contextArrayObj, rootObj, currentObj, myErrors) {
 		var exists = value !== undefined;
 		
 		if (!exists && def.required) {
@@ -73,20 +79,19 @@ define(function(require, exports, module) {
 			if (def.throwOnInvalid) {
 				throw err;
 			} else {
-				returnData.errors.push({ err : err, contextArray : contextArray });
-				return returnData;
+				myErrors.push({ err : err, contextArray : contextArray });
+				return value;
 			}
 		}
 		
 		if (!exists && !def.required && def.default === undefined) {
 			// doesn't exist, not required, does not have default then do nothing
-			return returnData;
+			return value;
 		}
 		
 		if (!exists && !def.required && def.default !== undefined) {
 			// doesn't exist, not required, has default then use default
 			value = getDefault(value, def, contextArray, contextArrayObj, rootObj, currentObj);
-			returnData.data = value;
 			
 			if (def.type === "object" || def.type === "array") {
 				// if it is an object and we're using the default, we still want it to run through the validations of it's inner keys
@@ -94,7 +99,7 @@ define(function(require, exports, module) {
 				
 				exists = true;
 			} else {
-				return returnData;
+				return value;
 			}
 		}
 		
@@ -103,7 +108,6 @@ define(function(require, exports, module) {
 			throw new Error("Wtf, this case should never happen.");
 		}
 		
-		var myErrors = [];
 		var simpleError = false;
 		
 		if (def.type === "any") {
@@ -176,15 +180,11 @@ define(function(require, exports, module) {
 			});
 		}
 		
-		if (myErrors.length > 0) {
-			if (def.throwOnInvalid) {
-				throw concatErrors(rootObj, myErrors);
-			} else {
-				returnData.errors = returnData.errors.concat(myErrors);
-			}
+		if (def.throwOnInvalid && myErrors.length > 0) {
+			throw concatErrors(rootObj, myErrors);
 		}
 		
-		return returnData;
+		return value;
 	}
 	
 	var validateArray = function(value, def, contextArray, contextArrayObj, rootObj, myErrors) {
@@ -195,16 +195,12 @@ define(function(require, exports, module) {
 			contextArray.push(i);
 			contextArrayObj.push(value);
 			
-			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value);
+			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value, myErrors);
 			
 			contextArray.pop();
 			contextArrayObj.pop();
 			
-			value[i] = tempReturn.data;
-			
-			if (tempReturn.errors.length > 0) {
-				myErrors.push.apply(myErrors, tempReturn.errors);
-			}
+			value[i] = tempReturn;
 		}
 	}
 	
@@ -220,17 +216,13 @@ define(function(require, exports, module) {
 			contextArray.push(val.name);
 			contextArrayObj.push(value);
 			
-			var tempReturn = validateField(value[val.name], val, contextArray, contextArrayObj, rootObj, value);
+			var tempReturn = validateField(value[val.name], val, contextArray, contextArrayObj, rootObj, value, myErrors);
 			
 			contextArray.pop();
 			contextArrayObj.pop();
 			
-			if (tempReturn.data !== undefined) {
-				value[val.name] = tempReturn.data;
-			}
-			
-			if (tempReturn.errors.length > 0) {
-				myErrors.push.apply(myErrors, tempReturn.errors);
+			if (tempReturn !== undefined) {
+				value[val.name] = tempReturn;
 			}
 		}
 		
@@ -255,14 +247,10 @@ define(function(require, exports, module) {
 			contextArray.push(i);
 			contextArrayObj.push(value);
 			
-			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value);
+			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value, myErrors);
 			
 			contextArray.pop();
 			contextArrayObj.pop();
-			
-			if (tempReturn.errors.length > 0) {
-				myErrors.push.apply(myErrors, tempReturn.errors);
-			}
 		}
 	}
 	
@@ -274,14 +262,10 @@ define(function(require, exports, module) {
 			contextArray.push(i);
 			contextArrayObj.push(value);
 			
-			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value);
+			var tempReturn = validateField(val, def.schema[0], contextArray, contextArrayObj, rootObj, value, myErrors);
 			
 			contextArray.pop();
 			contextArrayObj.pop();
-			
-			if (tempReturn.errors.length > 0) {
-				myErrors.push.apply(myErrors, tempReturn.errors);
-			}
 		}
 	}
 	
@@ -335,15 +319,6 @@ define(function(require, exports, module) {
 	var concatErrors = function(rootObj, errors) {
 		var msg = errors.map(function(val) { return val.err.message }).join("\r\n\t") + "\r\n\tin " + util.inspect(rootObj);
 		return new Error("Validation Error\r\n\t" + msg);
-	}
-
-	var getDefaultReturn = function(data) {
-		return {
-			data : data,
-			errors : [],
-			err : null,
-			success : false
-		}
 	}
 
 	module.exports = {
