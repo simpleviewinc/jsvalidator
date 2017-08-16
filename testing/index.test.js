@@ -80,11 +80,73 @@ describe(__filename, function() {
 	});
 	
 	it("should replace undefined value with default from function", function() {
-		var data = { foo : "fooValue" };
-		var returnData = validator.validate(data, { type : "object", schema : [{ name : "bar", type : "number", default : function(args) { return args.current.foo + "_barValue" } }] });
+		var data = {
+			foo : "fooValue",
+			nested : { key1 : "key1Value" },
+			nested2 : { key2 : "key2Value" },
+			arr : [
+				{ key3 : "key3Value1" },
+				{ key3 : "key3Value2" }
+			]
+		};
+		var returnData = validator.validate(data, {
+			type : "object",
+			schema : [
+				{ name : "foo", type : "string" },
+				{ name : "fooCurrent", type : "string", default : function(args) { return args.current.foo + "_current" } },
+				{
+					name : "nested",
+					type : "object",
+					schema : [
+						{ name : "key1", type : "string" },
+						{ name : "key1Current", type : "string", default : function(args) { return args.current.key1 + "_current" } },
+					]
+				},
+				{
+					name : "nested2",
+					type : "object",
+					schema : [
+						{ name : "key2", type : "string" },
+						{ name : "key2Current", type : "string", default : function(args) { return args.current.key2 + "_current" } }
+					]
+				},
+				{
+					name : "arr",
+					type : "array",
+					schema : {
+						type : "object",
+						schema : [
+							{ name : "key3", type : "string" },
+							{ name : "key3Current", type : "string", default : function(args) { return args.current.key3 + "_current" } }
+						]
+					}
+				}
+			]
+		});
 		
 		assert.ok(returnData.success);
-		assert.ok(data.bar === "fooValue_barValue");
+		assert.deepStrictEqual(returnData.data, {
+			foo : "fooValue",
+			fooCurrent : "fooValue_current",
+			nested : {
+				key1 : "key1Value",
+				key1Current : "key1Value_current"
+			},
+			nested2 : {
+				key2 : "key2Value",
+				key2Current : "key2Value_current"
+			},
+			arr : [
+				{
+					key3 : "key3Value1",
+					key3Current : "key3Value1_current"
+				},
+				{
+					key3 : "key3Value2",
+					key3Current : "key3Value2_current"
+				}
+			]
+		});
 	});
 	
 	it("should replace undefined value with default from function in array of objects", function() {

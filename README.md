@@ -19,11 +19,11 @@ Comprehensive recursive Javscript validator for objects, arrays, strings and mor
 
 ```
 : npm run simplebench
-> jsvalidator@0.9.0 simplebench /sv/gits/jsvalidator
+> jsvalidator@1.0.0 simplebench /sv/gits/jsvalidator
 > simplebench testing/benchmark.js
 
 Group:  default
-benchmark - count: 334, ops/sec: 334
+benchmark - count: 445, ops/sec: 445
 ```
 
 # Getting Started
