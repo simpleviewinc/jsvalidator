@@ -176,6 +176,10 @@ define(function(require, exports, module) {
 			} else {
 				validateSimpleObject(value, def);
 			}
+		} else if (type === "regex") {
+			if (value instanceof RegExp === false) {
+				simpleError = true;
+			}
 		} else {
 			// invalid type specified throw error, this is not a validation error but a developer error, so we throw
 			throw new Error("Field" + contextToString(contextArray) + "should be of type '" + def.type + "' but that type isn't supported by jsvalidator.");

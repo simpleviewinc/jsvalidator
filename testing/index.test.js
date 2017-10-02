@@ -491,6 +491,23 @@ describe(__filename, function() {
 	describe("tests array", function() {
 		var tests = [
 			{
+				it : "regex - valid",
+				data : /test regex/,
+				schema : {
+					type : "regex"
+				},
+				success : true
+			},
+			{
+				it : "regex - invalid",
+				data : "string",
+				schema : {
+					type : "regex"
+				},
+				success : false,
+				err : /Field is not of type 'regex'/
+			},
+			{
 				it : "indexObject - nested",
 				data : {
 					foo : { nested : "a" },
