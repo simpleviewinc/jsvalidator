@@ -321,12 +321,12 @@ describe(__filename, function() {
 		var data = { foo : "string", bar : 123, baz : "another" }
 		var returnData = validator.validate(data, { type : "simpleObject", schema : { type : "string" } });
 		assert.ok(!returnData.success);
-		assert.ok(returnData.err.message.match(/Field 'bar' is not of type 'string'/));
+		assert.ok(returnData.err.message.match(/Field 'bar' should be type 'string'/));
 		
 		var data = { inner : { foo : "string", bar : 123 } }
 		var returnData = validator.validate(data, { type : "object", schema : [{ name : "inner", type : "simpleObject", schema : { type : "string" } }] });
 		assert.ok(!returnData.success);
-		assert.ok(returnData.err.message.match(/Field 'inner.bar' is not of type 'string'/));
+		assert.ok(returnData.err.message.match(/Field 'inner.bar' should be type 'string'/));
 	});
 	
 	it("should validate simple field", function() {
@@ -428,7 +428,7 @@ describe(__filename, function() {
 		var returnData = validator.validate(data, { type : "array", schema : { type : "number" } });
 		
 		assert.ok(!returnData.success);
-		assert.ok(returnData.err.message.match(/Field '3' is not of type 'number'\./));
+		assert.ok(returnData.err.message.match(/Field '3' should be type 'number' but is type 'string'\./));
 	});
 	
 	it("should validate array of objects", function() {
@@ -437,7 +437,7 @@ describe(__filename, function() {
 		var returnData = validator.validate(data, { type : "array", schema : { type : "object", schema : [{ name : "foo", type : "string" }] } });
 		
 		assert.ok(!returnData.success);
-		assert.ok(returnData.err.message.match(/Field '2.foo' is not of type 'string'\./));
+		assert.ok(returnData.err.message.match(/Field '2.foo' should be type 'string' but is type 'number'\. Value is 1\./));
 	});
 	
 	it("should concat to a single error", function() {
@@ -448,12 +448,12 @@ describe(__filename, function() {
 		});
 		
 		assert.equal(temp.err instanceof Error, true);
-		assert.ok(temp.err.message.match(/Field 'foo' is not of type 'number'\./));
-		assert.ok(temp.err.message.match(/Field 'bar' is not of type 'string'\./));
-		assert.ok(temp.err.message.match(/Field 'baz' is not of type 'number'\./));
+		assert.ok(temp.err.message.match(/Field 'foo' should be type 'number' but is type 'string'\. Value is "bar"\./));
+		assert.ok(temp.err.message.match(/Field 'bar' should be type 'string' but is type 'number'\. Value is 1\./));
+		assert.ok(temp.err.message.match(/Field 'baz' should be type 'number' but is type 'string'\. Value is "moo"\./));
 	});
 	
-	it("should handler circular references in errors", function() {
+	it("should handle circular references in errors", function() {
 		var data = { foo : "bar" };
 		data.circle = data;
 		
@@ -463,7 +463,7 @@ describe(__filename, function() {
 		});
 		
 		assert.equal(temp.err instanceof Error, true);
-		assert.ok(temp.err.message.match(/in \{ foo: 'bar', circle: \[Circular\] \}/));
+		assert.ok(temp.err.message.match(/Field 'foo' should be type 'number' but is type 'string'\. Value is "bar"\./));
 	});
 	
 	it("should throw on invalid type", function() {
@@ -472,7 +472,7 @@ describe(__filename, function() {
 				var data = { foo : "string" };
 				var returnData = validator.validate(data, { type : "object", schema : [{ name : "foo", type : "fakeType" }] });
 			},
-			/Field 'foo' should be of type 'fakeType' but that type isn't supported by jsvalidator\./
+			/Field 'foo' should be type 'fakeType' but that type isn't supported by jsvalidator\./
 		);
 	});
 	
@@ -505,7 +505,7 @@ describe(__filename, function() {
 					type : "regex"
 				},
 				success : false,
-				err : /Field is not of type 'regex'/
+				err : /Field should be type 'regex'/
 			},
 			{
 				it : "indexObject - nested",
@@ -536,7 +536,7 @@ describe(__filename, function() {
 					]
 				},
 				success : false,
-				err : /Field 'bar.nested' is not of type 'string'/
+				err : /Field 'bar.nested' should be type 'string'/
 			},
 			{
 				it : "indexObject - deleteExtraKeys from failure object",
@@ -601,7 +601,7 @@ describe(__filename, function() {
 					allowExtraKeys : false
 				},
 				success : false,
-				err : /Field 'foo.2.key.baz' is not of type 'number'/
+				err : /Field 'foo.2.key.baz' should be type 'number'/
 			},
 			{
 				it : "custom - simple",
@@ -651,7 +651,7 @@ describe(__filename, function() {
 				},
 				success : false,
 				err : [
-					/Field is not of type 'string'/
+					/Field should be type 'string'/
 				]
 			},
 			{

@@ -6,8 +6,6 @@ if (typeof exports === 'object' && typeof define !== 'function') {
 }
 
 define(function(require, exports, module) {
-	var util = require("util-browser");
-	
 	// stash state variables so we don't have to pass from function to function
 	var contextArray;
 	var contextArrayObj;
@@ -182,11 +180,16 @@ define(function(require, exports, module) {
 			}
 		} else {
 			// invalid type specified throw error, this is not a validation error but a developer error, so we throw
-			throw new Error("Field" + contextToString(contextArray) + "should be of type '" + def.type + "' but that type isn't supported by jsvalidator.");
+			throw new Error("Field" + contextToString(contextArray) + "should be type '" + def.type + "' but that type isn't supported by jsvalidator.");
 		}
 		
 		if (simpleError) {
-			var err = new Error("Field" + contextToString(contextArray) + "is not of type '" + def.type + "'.");
+			var errMsg = "Field" + contextToString(contextArray) + "should be type '" + def.type + "' but is type '" + typeof value + "'.";
+			if (["boolean", "number", "string"].indexOf(typeof value) > -1) {
+				errMsg += " Value is " + JSON.stringify(value) + ".";
+			}
+			
+			var err = new Error(errMsg);
 			myErrors.push({ err : err, contextArray : contextArray });
 		} else if (custom !== undefined) {
 			custom.forEach(function(val, i) {
@@ -347,7 +350,7 @@ define(function(require, exports, module) {
 	}
 
 	var concatErrors = function(rootObj, errors) {
-		var msg = errors.map(function(val) { return val.err.message }).join("\r\n\t") + "\r\n\tin " + util.inspect(rootObj);
+		var msg = errors.map(function(val) { return val.err.message }).join("\r\n\t");
 		return new Error("Validation Error\r\n\t" + msg);
 	}
 
