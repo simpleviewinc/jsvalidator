@@ -6,6 +6,12 @@
 
 Comprehensive recursive Javscript validator for objects, arrays, strings and more.
 
+* Server - `require("jsvalidator")`
+* Webpack - `import { validate } from "jsvalidator"`
+* RequireJS - `require(["jsvalidator"], function(jsvalidator) {})`
+
+For the requireJS variant you will need to point your RequireJs config to the `dist/index.min.js` file.
+
 # Features
 
 1. Validate Objects, Arrays, and Arrays of Objects, Objects with Arrays, strings, numbers, classes and any recursive combination in between.
@@ -268,3 +274,8 @@ var temp = jsvalidator.validate(data, {
 * `object` - Objects which pass `typeof "object"`
 * `indexObject` - Objects which have key values where the key names are unknown but the values match a schema such as { foo : number, bar : number, baz : number }
 * `function` - Key is a `typeof "function"`
+
+# Development
+
+`npm run docker` - To load the dev environment.
+`npm run build` - To combile the `index.min.js` for UMD.

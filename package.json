@@ -2,15 +2,19 @@
 	"name" : "jsvalidator",
 	"description" : "Comprehensive recursive validator for objects, arrays, strings and more",
 	"author" : "Owen Allen <owenallenaz@gmail.com>",
-	"version" : "1.1.0",
+	"version" : "1.2.0",
 	"devDependencies" : {
 		"mocha" : "*",
 		"simplebench" : "*",
-		"webpack" : "4.28.1"
+		"webpack" : "4.28.1",
+		"webpack-cli" : "3.2.1"
 	},
+	"main" : "src/index.js",
 	"engines" : { "node" : ">=0.10.x" },
 	"scripts" : {
 		"test" : "./node_modules/.bin/mocha $(find testing/ -name *.test.js) -R spec --colors --check-leaks",
+		"build" : "webpack --config webpack.config.js",
+		"docker" : "./docker/build && ./docker/run || true",
 		"simplebench" : "./node_modules/.bin/simplebench testing/benchmark.js"
 	},
 	"repository" : {

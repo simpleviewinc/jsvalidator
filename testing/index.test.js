@@ -1,4 +1,4 @@
-var validator = require("../index.js");
+var validator = require("../src/index.js");
 var assert = require("assert");
 
 describe(__filename, function() {
