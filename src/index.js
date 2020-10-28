@@ -1,3 +1,4 @@
+"use strict";
 // stash state variables so we don't have to pass from function to function
 var contextArray;
 var contextArrayObj;
@@ -51,7 +52,7 @@ var defaultSchema = function(def) {
 				deleteExtraKeys : def.deleteExtraKeys,
 				allowExtraKeys : def.allowExtraKeys
 			}] :
-			def.schema instanceof Array ? def.schema :
+			def.schema instanceof Array ? def.schema.slice() :
 			def.schema !== undefined ? [def.schema] :
 			undefined
 		,

@@ -5,4 +5,4 @@ docker run -it \
 	-v $PWD/dist:/app/dist \
 	-v $PWD/webpack.config.js:/app/webpack.config.js \
 	-v $PWD/package.json:/app/package.json \
-	jsvalidator:local /bin/sh
+	jsvalidator:local /bin/bash

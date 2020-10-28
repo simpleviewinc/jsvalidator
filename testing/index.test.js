@@ -1,5 +1,7 @@
+"use strict";
 var validator = require("../src/index.js");
 var assert = require("assert");
+const deepFreeze = require("deep-freeze");
 
 describe(__filename, function() {
 	it("should require values", function() {
@@ -671,6 +673,84 @@ describe(__filename, function() {
 					/Field failed custom validation 'Invalid1'/,
 					/Field failed custom validation 'Invalid2'/
 				]
+			},
+			{
+				it : "simple - should not modify schema",
+				data : "foo",
+				schema : deepFreeze({
+					type : "string"
+				}),
+				success : true
+			},
+			{
+				it : "object - should not modify schema",
+				data : {
+					foo : "string",
+					bar : true
+				},
+				schema : deepFreeze({
+					type : "object",
+					schema : [
+						{ name : "foo", type : "string" },
+						{ name : "bar", type : "boolean" }
+					]
+				}),
+				success : true
+			},
+			{
+				it : "indexObject { key: string } - should not modify schema",
+				data : {
+					a : "foo",
+					b : "baz",
+					c : "qux"
+				},
+				schema : deepFreeze({
+					type : "indexObject",
+					schema : { type : "string" }
+				}),
+				success : true
+			},
+			{
+				it : "indexObject { key : Object } - should not modify schema",
+				data : {
+					foo : { a : "str", b : true, c : 10 },
+					bar : { a : "str2", b : false, c : 5 }
+				},
+				schema : deepFreeze({
+					type : "indexObject",
+					schema : [
+						{ name : "a", type : "string" },
+						{ name : "b", type : "boolean" },
+						{ name : "c", type : "number" }
+					]
+				}),
+				success : true
+			},
+			{
+				it : "deeply nested object - should not modify schema",
+				data : {
+					foo : [
+						{ bar : { a : "str", b : true, c : 10 }, baz : { a : "test", b : false, c : 5 } }
+					]
+				},
+				schema : deepFreeze({
+					type : "object",
+					schema : [
+						{
+							name : "foo",
+							type : "array",
+							schema : {
+								type : "indexObject",
+								schema : [
+									{ name : "a", type : "string" },
+									{ name : "b", type : "boolean" },
+									{ name : "c", type : "number" }
+								]
+							}
+						}
+					]
+				}),
+				success : true
 			}
 		]
 		

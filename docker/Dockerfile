@@ -1,4 +1,4 @@
-FROM node:10.14-alpine
+FROM node:14.15.0
 COPY package.json /app/package.json
 RUN cd /app && npm install
 
