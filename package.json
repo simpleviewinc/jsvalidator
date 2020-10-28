@@ -16,6 +16,7 @@
 		"test" : "./node_modules/.bin/mocha $(find testing/ -name *.test.js) -R spec --colors --check-leaks",
 		"build" : "webpack --config webpack.config.js",
 		"docker" : "./docker/build && ./docker/run || true",
+		"publish": "./docker/publish",
 		"simplebench" : "./node_modules/.bin/simplebench testing/benchmark.js"
 	},
 	"repository" : {
