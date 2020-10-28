@@ -1,27 +1,29 @@
 {
-	"name" : "jsvalidator",
-	"description" : "Comprehensive recursive validator for objects, arrays, strings and more",
-	"author" : "Owen Allen <owenallenaz@gmail.com>",
-	"version" : "1.2.0",
-	"devDependencies" : {
-		"mocha" : "*",
-		"simplebench" : "*",
-		"webpack" : "4.28.1",
-		"webpack-cli" : "3.2.1",
+	"name": "jsvalidator",
+	"description": "Comprehensive recursive validator for objects, arrays, strings and more",
+	"author": "Owen Allen <owenallenaz@gmail.com>",
+	"version": "1.2.1",
+	"devDependencies": {
+		"mocha": "*",
+		"simplebench": "*",
+		"webpack": "4.28.1",
+		"webpack-cli": "3.2.1",
 		"deep-freeze": "0.0.1"
 	},
-	"main" : "src/index.js",
-	"engines" : { "node" : ">=0.10.x" },
-	"scripts" : {
-		"test" : "./node_modules/.bin/mocha $(find testing/ -name *.test.js) -R spec --colors --check-leaks",
-		"build" : "webpack --config webpack.config.js",
-		"docker" : "./docker/build && ./docker/run || true",
+	"main": "src/index.js",
+	"engines": {
+		"node": ">=0.10.x"
+	},
+	"scripts": {
+		"test": "./node_modules/.bin/mocha $(find testing/ -name *.test.js) -R spec --colors --check-leaks",
+		"build": "webpack --config webpack.config.js",
+		"docker": "./docker/build && ./docker/run || true",
 		"publish": "./docker/publish",
-		"simplebench" : "./node_modules/.bin/simplebench testing/benchmark.js"
+		"simplebench": "./node_modules/.bin/simplebench testing/benchmark.js"
 	},
-	"repository" : {
-		"type" : "git",
-		"url" : "https://github.com/simpleviewinc/jsvalidator.git"
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/simpleviewinc/jsvalidator.git"
 	},
-	"license" : "MIT"
+	"license": "MIT"
 }
