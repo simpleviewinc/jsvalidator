@@ -1,4 +1,3 @@
-"use strict";
 // stash state variables so we don't have to pass from function to function
 var contextArray;
 var contextArrayObj;
