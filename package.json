@@ -2,7 +2,7 @@
 	"name": "jsvalidator",
 	"description": "Comprehensive recursive validator for objects, arrays, strings and more",
 	"author": "Owen Allen <owenallenaz@gmail.com>",
-	"version": "1.2.3",
+	"version": "1.2.4",
 	"devDependencies": {
 		"mocha": "*",
 		"simplebench": "*",
