@@ -1,4 +1,3 @@
-"use strict";
 // stash state variables so we don't have to pass from function to function
 var contextArray;
 var contextArrayObj;
@@ -241,7 +240,8 @@ var validateObject = function(value, def) {
 		contextArray.pop();
 		contextArrayObj.pop();
 		
-		if (tempReturn !== undefined) {
+		// If we get a different value from tempReturn, then set it, this will only occur when a default has been set
+		if (value[val.name] !== tempReturn) {
 			value[val.name] = tempReturn;
 		}
 	}

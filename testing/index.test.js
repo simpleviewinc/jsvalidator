@@ -751,6 +751,38 @@ describe(__filename, function() {
 					]
 				}),
 				success : true
+			},
+			{
+				it : "should not modify object unless necessary",
+				data : deepFreeze({
+					foo : {
+						bar : {
+							baz : true
+						}
+					}
+				}),
+				schema : deepFreeze({
+					type : "object",
+					schema : [
+						{
+							name : "foo",
+							type : "object",
+							schema : [
+								{
+									name : "bar",
+									type : "object",
+									schema : [
+										{
+											name : "baz",
+											type : "boolean"
+										}
+									]
+								}
+							]
+						}
+					]
+				}),
+				success : true
 			}
 		]
 		
